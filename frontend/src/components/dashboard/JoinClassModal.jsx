@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import React, { useState } from 'react';
->>>>>>> giridharan
 import { useDispatch, useSelector } from 'react-redux';
 import InputField from '../common/InputField.jsx';
 import Button from '../common/Button.jsx';
