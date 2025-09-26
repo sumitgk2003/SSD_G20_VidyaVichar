@@ -1,0 +1,11 @@
+.home-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* center vertically */
+  align-items: center;       /* center horizontally */
+  height: 100vh;             /* fill the full viewport height */
+  width: 100vw;              /* fill the full viewport width */
+  background: black;
+  text-align: center;
+  margin: 0;                 /* remove default margins */
+}
