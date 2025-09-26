@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {Teacher} from "../models/teacher.model.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { Class } from "../models/class.model.js";
 
 const options={
     httpOnly:true,
@@ -115,40 +116,29 @@ const logoutTeacher=asyncHandler(async(req,res)=>{
   .json(new ApiResponse(200,{},"Teacher logged Out Successfully"))
 })
 
-const createEvent=asyncHandler(async(req,res)=>{
-  const {title,description,date,time,venue}=req.body;
-  console.log(title, description, date, time, venue);
+const createClass=asyncHandler(async(req,res)=>{
+  const {title}=req.body;
+  console.log(title);
   if(
-      [title,description,date,time,venue].some((field)=>!field||field.trim()==="")
+      [title].some((field)=>!field||field.trim()==="")
     ){
       throw new ApiError(400,"All fields are required")
     }
-  const keywords=await getKeywords(title+" "+description);
-  console.log(keywords);
-  const posterLocalPath=req.files?.poster[0]?.path;
-  console.log(posterLocalPath);
-  const poster=await uploadOnCloudinary(posterLocalPath);
-  
-
-  const event=await Event.create({
+  const accessCode = Class.methods.generateAcessCode();
+  const class=await Class.create({
     title,
-    description,
-    date,
-    time,
-    keywords,
-    venue,
-    poster:poster?.url||"",
-    createdBy:req.user._id
+    accessCode,
+    teacher = req.user._id
   })
 
-  const createdEvent=await Event.findById(event._id)
+  const createdClass=await Class.findById(class._id)
 
-  if(!createEvent){
-    throw new ApiError(500,"Something went wrong while creating event")
+  if(!createClass){
+    throw new ApiError(500,"Something went wrong while creating class")
   }
 
   return res.status(201).json(
-      new ApiResponse(200,createdEvent,"Event Created Successfully")
+      new ApiResponse(200,createdEvent,"Class Created Successfully")
     )
 })
 
