@@ -1,0 +1,35 @@
+/* * This file will contain styles specific to the main Q&A board page.
+ * You can add basic structural styles here to get started.
+ */
+
+.classroom-page {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.classroom-page h1 {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 10px;
+}
+
+/* Styles for the QuestionBoard component */
+.question-board-container {
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.question-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-top: 20px;
+}
+
+/* Add styles for components used within the board (like FilterControls, QuestionForm, StickyNote) */
+/* .filter-controls { ... } */
+/* .question-form-container { ... } */
+/* .sticky-note { ... } */

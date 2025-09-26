@@ -1,10 +1,16 @@
-import React from "react";
-import Home from "./pages/HomePage";   // adjust path if your Home.jsx is elsewhere
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './routes/AppRoutes.jsx'; // Import the file defining all routes
 
-export default function App() {
+const App = () => {
   return (
-    <div>
-      <Home />
-    </div>
+    // All components within BrowserRouter (including AppRoutes and DashboardPage) 
+    // will now have access to routing functionalities.
+    <BrowserRouter>
+      {/* AppRoutes will handle conditional rendering of pages and protection */}
+      <AppRoutes /> 
+    </BrowserRouter>
   );
-}
+};
+
+export default App;
