@@ -2,10 +2,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {Teacher} from "../models/teacher.model.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Event } from "../models/event.model.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
-import {EventRegistration} from "../models/registration.model.js"
-import getKeywords from "../ML models/keybert.js";
 
 const options={
     httpOnly:true,
@@ -30,15 +26,15 @@ const generateAccessAndRefreshTokens=async(TeacherId)=>{
 
 const registerTeacher=asyncHandler(
   async(req,res)=>{
-    const { TeacherID, email, Name, Department, password } = req.body;
+    const {  email, Name, password } = req.body;
     console.log(email);
     if(
-      [TeacherID,Department,Name,email,password].some((field)=>!field||field.trim()==="")
+      [Name,email,password].some((field)=>!field||field.trim()==="")
     ){
       throw new ApiError(400,"All fields are required")
     }
     const existedTeacher=await Teacher.findOne({
-      $or:[{email},{TeacherID}]
+      $or:[{email}]
     })
     console.log(existedTeacher);
     if(existedTeacher){
@@ -46,10 +42,8 @@ const registerTeacher=asyncHandler(
     }
 
     const teacher=await Teacher.create({
-      TeacherID, 
       email, 
       Name, 
-      Department, 
       password
     })
 
@@ -165,13 +159,7 @@ const getAllCreatedEvents=asyncHandler(async(req,res)=>{
     new ApiResponse(200,events,"Events fetched successfully")
   )
 })
-const getAllRegistrations=asyncHandler(async(req,res)=>{
-  const eventId=req.body.eventId;
-  const registrations = await EventRegistration.find({
-    event: eventId,
-  }).populate("student", "Name email");
-  return res.status(200,registrations,"Registrations fetched")
-})
 
 
-export {registerTeacher,createEvent,loginTeacher,logoutTeacher,getAllCreatedEvents,getAllRegistrations};
+
+export {registerTeacher,createEvent,loginTeacher,logoutTeacher,getAllCreatedEvents};

@@ -3,9 +3,6 @@ import {ApiError} from "../utils/ApiError.js"
 import {Student} from "../models/student.model.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { Query } from "../models/query.model.js";
-import { EventRegistration } from "../models/registration.model.js";
-import { Event } from "../models/event.model.js";
-import getCategory from "../ML models/bert.js";
 export const options={
     httpOnly:true,
     secure:true
@@ -28,15 +25,15 @@ export const generateAccessAndRefreshTokens=async(StudentId)=>{
 
 const registerStudent=asyncHandler(
   async(req,res)=>{
-    const { PRN, email, Name, Roll_Number, Year, Division, Department, password } = req.body;
-    console.log(PRN, email, Name, Roll_Number, Year, Division, Department, password );
+    const { email, Name, Roll_Number, password } = req.body;
+    console.log(email, Name, Roll_Number, password );
     if(
-      [Name,email,PRN,Roll_Number,Year,Division,Department,password].some((field)=>!field||field.trim()==="")
+      [Name,email,Roll_Number,password].some((field)=>!field||field.trim()==="")
     ){
       throw new ApiError(400,"All fields are required")
     }
     const existedStudent=await Student.findOne({
-      $or:[{Roll_Number},{email},{PRN}]
+      $or:[{Roll_Number},{email}]
     })
     console.log(existedStudent);
     if(existedStudent){
@@ -45,12 +42,8 @@ const registerStudent=asyncHandler(
 
     const student=await Student.create({
       Name,
-      PRN,
       email,
       Roll_Number,
-      Year,
-      Division,
-      Department,
       password
     })
     console.log(student);
@@ -131,18 +124,15 @@ const createQuery=asyncHandler(async(req,res)=>{
       throw new ApiError(400,"All fields are required")
     }
     console.log(queryText);
-    const category=await getCategory(queryText);
-    console.log(category);
   const query=await Query.create({
       queryText,
-      category,
       student:req.user._id
     })
 
     const createdQuery=await Query.findById(query._id)
     
       if(!createQuery){
-        throw new ApiError(500,"Something went wrong while creating event")
+        throw new ApiError(500,"Something went wrong while creating query")
       }
 
     return res.status(201).json(
@@ -150,19 +140,6 @@ const createQuery=asyncHandler(async(req,res)=>{
     )
 })
 
-const registerForEvent=asyncHandler(async(req,res)=>{
-  const {eventId}=req.body;
-  if(!eventId){
-    throw new ApiError(400,"Event ID is required")
-  }
-  EventRegistration.create({
-    student:req.user._id,
-    event:eventId
-  })
-  return res.status(200).json(
-    new ApiResponse(200,{},`Registered for event successfully`)
-  )
-})
 
 const getCreatedQueries=asyncHandler(async(req,res)=>{
   const queries = await Query.find({student:req.user._id})
@@ -172,15 +149,6 @@ const getCreatedQueries=asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200, queries, "Your queries fetched successfully"));
 })
 
-const getAllRegisteredEvents=asyncHandler(async(req,res)=>{
-  const registrations=await EventRegistration.find({student:req.user._id}).populate("event").sort({createdAt:-1});
-
-  const events = registrations.map((reg) => reg.event);
-
-  return res.status(200).json(
-    new ApiResponse(200,events,"Events fetched successfully")
-  )
-})
 
 const getAllEvents=asyncHandler(async(req,res)=>{
   const events=await Event.find().populate("createdBy","Name email").sort({createdAt:-1});
@@ -189,4 +157,4 @@ const getAllEvents=asyncHandler(async(req,res)=>{
     )
 })
 
-export {registerStudent,loginStudent,logoutStudent,createQuery,registerForEvent,getCreatedQueries,getAllRegisteredEvents,getAllEvents};
+export {registerStudent,loginStudent,logoutStudent,createQuery,getCreatedQueries,getAllEvents};
