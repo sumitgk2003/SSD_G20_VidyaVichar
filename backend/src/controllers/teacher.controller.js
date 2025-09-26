@@ -125,15 +125,15 @@ const createClass=asyncHandler(async(req,res)=>{
       throw new ApiError(400,"All fields are required")
     }
   const accessCode = Class.methods.generateAcessCode();
-  const class=await Class.create({
+  const classs=await Class.create({
     title,
     accessCode,
-    teacher = req.user._id
+    teacher : req.user._id
   })
 
-  const createdClass=await Class.findById(class._id)
+  const createdClass=await Class.findById(classs._id)
 
-  if(!createClass){
+  if(!createdClass){
     throw new ApiError(500,"Something went wrong while creating class")
   }
 
@@ -151,4 +151,4 @@ const getAllCreatedEvents=asyncHandler(async(req,res)=>{
 
 
 
-export {registerTeacher,createEvent,loginTeacher,logoutTeacher,getAllCreatedEvents};
+export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents};
