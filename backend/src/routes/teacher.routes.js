@@ -9,6 +9,7 @@ router.route("/login").post(loginTeacher);
 
 //secured routes
 router.route("/logout").post(verifyJWT,logoutTeacher);
+router.route("/createClass").post(verifyJWT,createClass);
 router.route("/getAllCreatedEvents").get(verifyJWT,getAllCreatedEvents);
 
 export default router;

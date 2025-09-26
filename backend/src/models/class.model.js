@@ -16,7 +16,7 @@ const classSchema = new mongoose.Schema({
   {timestamps : true}
 );
 
-classSchema.methods.generateAccessCode= function makeid() {
+classSchema.methods.generateAccessCode= function() {
     var result           = '';
     var characters       ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var charactersLength = characters.length;

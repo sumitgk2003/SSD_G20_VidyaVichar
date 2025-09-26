@@ -124,10 +124,9 @@ const createClass=asyncHandler(async(req,res)=>{
     ){
       throw new ApiError(400,"All fields are required")
     }
-  const accessCode = Class.methods.generateAcessCode();
+  // const accessCode = Class.generateAccessCode();
   const classs=await Class.create({
     title,
-    accessCode,
     teacher : req.user._id
   })
 
@@ -136,9 +135,11 @@ const createClass=asyncHandler(async(req,res)=>{
   if(!createdClass){
     throw new ApiError(500,"Something went wrong while creating class")
   }
-
+  const accessCode = createdClass.generateAccessCode();
+  createdClass.accessCode = accessCode;
+  await createdClass.save({ validateBeforeSave: false });
   return res.status(201).json(
-      new ApiResponse(200,createdEvent,"Class Created Successfully")
+      new ApiResponse(200,createdClass,"Class Created Successfully")
     )
 })
 
