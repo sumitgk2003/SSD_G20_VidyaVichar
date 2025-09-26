@@ -15,9 +15,9 @@ const classSchema = new mongoose.Schema({
   {timestamps : true}
 );
 
-classSchema.methods.generateAccessCode= async makeid() {
+classSchema.methods.generateAccessCode= function makeid() {
     var result           = '';
-    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var characters       ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var charactersLength = characters.length;
     for ( var i = 0; i < 6; i++ ) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -25,7 +25,7 @@ classSchema.methods.generateAccessCode= async makeid() {
     return result;
 }
 
-export const Query = mongoose.model(
-  'Query',
-  querySchema
+export const Class = mongoose.model(
+  'Class',
+  classSchema
 );
