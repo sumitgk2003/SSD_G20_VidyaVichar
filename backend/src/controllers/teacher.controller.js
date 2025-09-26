@@ -117,6 +117,9 @@ const logoutTeacher=asyncHandler(async(req,res)=>{
 })
 
 const createClass=asyncHandler(async(req,res)=>{
+  if(req.userType!="Teacher"){
+    throw new ApiError(401,"You are not authorized to create class");
+  }
   const {title}=req.body;
   console.log(title);
   if(

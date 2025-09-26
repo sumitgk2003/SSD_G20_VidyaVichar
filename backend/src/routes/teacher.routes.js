@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents} from "../controllers/teacher.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-
 const router=Router() ;
 
 router.route("/register").post(registerTeacher);

@@ -5,10 +5,20 @@ const querySchema = new mongoose.Schema({
     ref: "Student",
     required: true
   },
+  class:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"Class",
+    required:true
+  },
   queryText: {
     type: String,
     required: true
   },
+  status:{
+    type:String,
+    enum:['Unanswered','Answered'],
+    default:'Unanswered'
+  }
 },{timestamps : true})
 
 export const Query = mongoose.model(
