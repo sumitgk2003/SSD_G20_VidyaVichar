@@ -1,67 +1,71 @@
-// Question service wired to backend student endpoints (queries)
+// src/services/questionService.js
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+import { getAuthHeader } from './authService';
 
-const handleJson = async (res) => {
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const message = data?.message || data?.error || `Request failed (${res.status})`;
-    throw new Error(message);
-  }
-  return data;
-};
+const API_BASE_URL = 'http://localhost:5000/api/questions'; // Replace with your actual backend URL
 
-// Map backend Query to frontend board item
-const mapQueryToQuestion = (q) => ({
-  id: q._id,
-  text: q.queryText,
-  author: { username: q?.student?.Name || 'Student' },
-  timestamp: q.createdAt,
-  status: 'open',
-  isImportant: false,
-});
-
-// 1. Get Questions (we map to created queries of the logged-in student)
-const getQuestions = async (_classId, _token) => {
-  // Backend does not support classes/questions per class; reuse queries as questions
-  const res = await fetch(`${API_BASE}/api/v1/student/getCreatedQueries`, {
+/**
+ * Fetches all questions for a specific class.
+ * @param {string} classId - The ID of the class.
+ * @returns {Promise<Array<Object>>} List of questions.
+ */
+export async function getQuestionsByClass(classId) {
+  const response = await fetch(`${API_BASE_URL}/class/${classId}`, {
     method: 'GET',
-    credentials: 'include',
+    headers: getAuthHeader(),
   });
-  const json = await handleJson(res);
-  const list = Array.isArray(json?.data) ? json.data : [];
-  return {
-    questions: list.map(mapQueryToQuestion),
-    classDetails: { className: 'Q&A Board', subject: 'General' },
-  };
-};
 
-// 2. Create Question (creates a Query)
-const createQuestion = async ({ text }, _token) => {
-  const body = { queryText: text };
-  const res = await fetch(`${API_BASE}/api/v1/student/createQuery`, {
+  if (!response.ok) {
+    throw new Error('Failed to fetch questions.');
+  }
+
+  return response.json();
+}
+
+/**
+ * Posts a new question to a class.
+ * @param {string} classId - The ID of the class.
+ * @param {string} content - The content of the question.
+ * @returns {Promise<Object>} The posted question object.
+ */
+export async function postQuestion(classId, content) {
+  const response = await fetch(API_BASE_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({ classId, content }),
   });
-  const json = await handleJson(res);
-  return mapQueryToQuestion(json?.data);
-};
 
-// 3. Update Question (no backend support; keep client-only update for UX)
-const updateQuestion = async (data) => {
-  // Simulate immediate success; in real app this would call a backend endpoint
-  return {
-    id: data.questionId,
-    text: data.text,
-    author: data.author,
-    timestamp: data.timestamp,
-    status: data.newStatus || 'open',
-    isImportant: data.isImportant ?? false,
-  };
-};
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to post question.');
+  }
 
-const questionService = { getQuestions, createQuestion, updateQuestion };
+  return response.json();
+}
 
-export default questionService;
+/**
+ * Posts an answer to an existing question (Instructor only).
+ * @param {string} questionId - The ID of the question.
+ * @param {string} answerContent - The content of the answer.
+ * @returns {Promise<Object>} The updated question object with the answer.
+ */
+export async function postAnswer(questionId, answerContent) {
+  const response = await fetch(`${API_BASE_URL}/${questionId}/answer`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+    body: JSON.stringify({ answer: answerContent }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to post answer.');
+  }
+
+  return response.json();
+}
