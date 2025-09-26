@@ -1,1 +1,1 @@
-export const DB_NAME="VidyaVihar"
+export const DB_NAME="VidyaVichar"

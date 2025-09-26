@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {Teacher} from "../models/teacher.model.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { Class } from "../models/class.model.js";
 
 const options={
     httpOnly:true,
@@ -33,9 +34,9 @@ const registerTeacher=asyncHandler(
     ){
       throw new ApiError(400,"All fields are required")
     }
-    const existedTeacher=await Teacher.findOne({
-      $or:[{email}]
-    })
+    const existedTeacher=await Teacher.findOne(
+      {email}
+    )
     console.log(existedTeacher);
     if(existedTeacher){
       throw new ApiError(409,"Teacher already exist");
@@ -108,7 +109,6 @@ const logoutTeacher=asyncHandler(async(req,res)=>{
       new:true
     }
   )
-  console.log("zatu logout");
   return res
   .status(200)
   .clearCookie("accessToken",options)
@@ -116,40 +116,30 @@ const logoutTeacher=asyncHandler(async(req,res)=>{
   .json(new ApiResponse(200,{},"Teacher logged Out Successfully"))
 })
 
-const createEvent=asyncHandler(async(req,res)=>{
-  const {title,description,date,time,venue}=req.body;
-  console.log(title, description, date, time, venue);
+const createClass=asyncHandler(async(req,res)=>{
+  const {title}=req.body;
+  console.log(title);
   if(
-      [title,description,date,time,venue].some((field)=>!field||field.trim()==="")
+      [title].some((field)=>!field||field.trim()==="")
     ){
       throw new ApiError(400,"All fields are required")
     }
-  const keywords=await getKeywords(title+" "+description);
-  console.log(keywords);
-  const posterLocalPath=req.files?.poster[0]?.path;
-  console.log(posterLocalPath);
-  const poster=await uploadOnCloudinary(posterLocalPath);
-  
-
-  const event=await Event.create({
+  // const accessCode = Class.generateAccessCode();
+  const classs=await Class.create({
     title,
-    description,
-    date,
-    time,
-    keywords,
-    venue,
-    poster:poster?.url||"",
-    createdBy:req.user._id
+    teacher : req.user._id
   })
 
-  const createdEvent=await Event.findById(event._id)
+  const createdClass=await Class.findById(classs._id)
 
-  if(!createEvent){
-    throw new ApiError(500,"Something went wrong while creating event")
+  if(!createdClass){
+    throw new ApiError(500,"Something went wrong while creating class")
   }
-
+  const accessCode = createdClass.generateAccessCode();
+  createdClass.accessCode = accessCode;
+  await createdClass.save({ validateBeforeSave: false });
   return res.status(201).json(
-      new ApiResponse(200,createdEvent,"Event Created Successfully")
+      new ApiResponse(200,createdClass,"Class Created Successfully")
     )
 })
 
@@ -162,4 +152,4 @@ const getAllCreatedEvents=asyncHandler(async(req,res)=>{
 
 
 
-export {registerTeacher,createEvent,loginTeacher,logoutTeacher,getAllCreatedEvents};
+export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents};
