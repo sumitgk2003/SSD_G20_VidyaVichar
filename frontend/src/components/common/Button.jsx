@@ -1,14 +1,10 @@
-import React from 'react';
+import React from "react";
+import "./Button.css";
 
-
-export default function Button({ children, onClick, variant = 'default', className = '', ...props }) {
-const base = 'btn';
-const variantClass = variant === 'outline' ? 'btn-outline' : 'btn-primary';
-
-
-return (
-<button onClick={onClick} className={`${base} ${variantClass} ${className}`} {...props}>
-{children}
-</button>
-);
+export default function Button({ children, onClick, type = "button" }) {
+  return (
+    <button className="vv-button" type={type} onClick={onClick}>
+      {children}
+    </button>
+  );
 }
