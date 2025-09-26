@@ -20,11 +20,6 @@ const teacherSchema = new mongoose.Schema({
         type: String
     }
 },{timestamps : true});
-  
-  refreshToken:{
-      type: String
-    }
-},{timestamps : true})
 
 teacherSchema.pre("save",async function(next){
   if(!this.isModified("password"))return next();
