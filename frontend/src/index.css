@@ -51,12 +51,14 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
+/* Hover and focus states are typically included */
 button:hover {
-  border-color: #646cff;
+  border-color: #646cff; /* Changes border color on hover */
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 4px auto -webkit-focus-ring-color; /* Enhances accessibility */
 }
 
 @media (prefers-color-scheme: light) {
