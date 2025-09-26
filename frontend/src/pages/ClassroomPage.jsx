@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
-
 import Header from '../components/layout/Header';
 import QuestionBoard from '../components/board/QuestionBoard';
 import QuestionForm from '../components/board/QuestionForm';
