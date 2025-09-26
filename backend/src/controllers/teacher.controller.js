@@ -33,9 +33,9 @@ const registerTeacher=asyncHandler(
     ){
       throw new ApiError(400,"All fields are required")
     }
-    const existedTeacher=await Teacher.findOne({
-      $or:[{email}]
-    })
+    const existedTeacher=await Teacher.findOne(
+      {email}
+    )
     console.log(existedTeacher);
     if(existedTeacher){
       throw new ApiError(409,"Teacher already exist");
@@ -108,7 +108,6 @@ const logoutTeacher=asyncHandler(async(req,res)=>{
       new:true
     }
   )
-  console.log("zatu logout");
   return res
   .status(200)
   .clearCookie("accessToken",options)

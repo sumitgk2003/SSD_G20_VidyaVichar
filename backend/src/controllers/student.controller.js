@@ -32,9 +32,11 @@ const registerStudent=asyncHandler(
     ){
       throw new ApiError(400,"All fields are required")
     }
+    console.log("jdfk");
     const existedStudent=await Student.findOne({
       $or:[{Roll_Number},{email}]
     })
+    console.log("jdfk");
     console.log(existedStudent);
     if(existedStudent){
       throw new ApiError(409,"Student already exist");
