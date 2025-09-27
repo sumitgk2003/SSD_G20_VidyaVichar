@@ -1,16 +1,20 @@
 import React from 'react';
+import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
-import AppRoutes from './routes/AppRoutes.jsx'; // Import the file defining all routes
+import { store } from './app/features/store';
+import AppRoutes from './routes/AppRoutes';
+import './App.css';
 
-const App = () => {
+function App() {
   return (
-    // All components within BrowserRouter (including AppRoutes and DashboardPage) 
-    // will now have access to routing functionalities.
-    <BrowserRouter>
-      {/* AppRoutes will handle conditional rendering of pages and protection */}
-      <AppRoutes /> 
-    </BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
+        <div className="App">
+          <AppRoutes />
+        </div>
+      </BrowserRouter>
+    </Provider>
   );
-};
+}
 
 export default App;

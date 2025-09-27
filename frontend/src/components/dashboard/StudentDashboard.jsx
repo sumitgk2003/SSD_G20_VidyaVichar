@@ -1,65 +1,99 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import ClassCard from './ClassCard.jsx';
-import Button from '../common/Button.jsx';
-import Modal from '../common/Modal.jsx';
-import JoinClassModal from './JoinClassModal.jsx';
+import ClassCard from './ClassCard';
+import Button from '../common/Button';
+import Modal from '../common/Modal';
+import JoinClassModal from './JoinClassModal';
+import { clearError } from '../../app/features/classSlice';
+import './Dashboard.css';
 
 const StudentDashboard = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const { classes, status, error } = useSelector((state) => state.classes);
-  
-  const joinedClasses = classes; 
 
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
+  const handleOpenJoinModal = () => {
+    dispatch(clearError());
+    setIsJoinModalOpen(true);
+  };
 
-  const handleClassSelect = (classId) => {
+  const handleCloseJoinModal = () => {
+    setIsJoinModalOpen(false);
+  };
+
+  const handleClassClick = (classId) => {
     navigate(`/classroom/${classId}`);
   };
 
   if (status === 'loading') {
-    return <div className="dashboard-message">Loading your joined classes...</div>;
-  }
-
-  if (status === 'failed') {
-    return <div className="dashboard-message error">Error loading classes: {error}</div>;
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading your classes...</p>
+      </div>
+    );
   }
 
   return (
     <div className="student-dashboard">
       <div className="dashboard-controls">
-        <Button onClick={handleOpenModal} variant="success">
-          Join New Class
+        <div className="controls-header">
+          <h2>Your Classes</h2>
+          <p>Join classes and participate in interactive Q&A sessions</p>
+        </div>
+        <Button 
+          onClick={handleOpenJoinModal} 
+          variant="success"
+          size="large"
+          className="join-btn"
+        >
+          + Join New Class
         </Button>
       </div>
 
-      <div className="class-list-container">
-        <h3 className="list-title">Your Enrolled Classes</h3>
-        
-        {joinedClasses.length === 0 ? (
-          <p className="dashboard-message no-classes">
-            You haven't joined any classes yet. Click "Join New Class" above!
-          </p>
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      <div className="classes-section">
+        {classes.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🎓</div>
+            <h3>No classes yet</h3>
+            <p>Join a class using an access code to start asking questions and engaging with your instructors.</p>
+            <Button 
+              onClick={handleOpenJoinModal} 
+              variant="success"
+              size="large"
+            >
+              Join Your First Class
+            </Button>
+          </div>
         ) : (
-          <div className="class-cards-grid">
-            {joinedClasses.map((classData) => (
+          <div className="classes-grid">
+            {classes.map((classData) => (
               <ClassCard 
                 key={classData.id}
                 classData={classData}
-                onClick={() => handleClassSelect(classData.id)}
+                onClick={() => handleClassClick(classData.id)}
+                showAccessCode={false}
               />
             ))}
           </div>
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <JoinClassModal onClose={handleCloseModal} />
+      <Modal 
+        isOpen={isJoinModalOpen} 
+        onClose={handleCloseJoinModal}
+        title="Join Class"
+      >
+        <JoinClassModal onClose={handleCloseJoinModal} />
       </Modal>
     </div>
   );

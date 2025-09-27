@@ -4,16 +4,17 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import InputField from '../components/common/InputField';
 import Button from '../components/common/Button';
 import ToggleRole from '../components/common/ToggleRole';
-import { login, clearError } from '../app/features/authSlice';
+import { register, clearError } from '../app/features/authSlice';
 import './AuthPage.css';
 
-const LoginPage = () => {
+const SignupPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { status, error, isAuthenticated } = useSelector((state) => state.auth);
 
   const [role, setRole] = useState(location.state?.role || 'student');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -31,14 +32,18 @@ const LoginPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim()) {
       return;
     }
 
-    dispatch(login({ role, email: email.trim(), password }))
+    dispatch(register({ role, name: name.trim(), email: email.trim(), password }))
       .unwrap()
       .then(() => {
-        navigate('/dashboard');
+        // Registration successful, redirect to login
+        navigate('/login', { 
+          state: { role },
+          replace: true 
+        });
       })
       .catch(() => {
         // Error is handled by Redux
@@ -49,14 +54,24 @@ const LoginPage = () => {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <h1>Welcome Back</h1>
-          <p>Sign in to your VidyaVichara account</p>
+          <h1>Join VidyaVichara</h1>
+          <p>Create your account to start engaging in interactive learning</p>
         </div>
 
         <div className="auth-form-container">
           <ToggleRole role={role} setRole={setRole} disabled={isLoading} />
           
           <form onSubmit={handleSubmit} className="auth-form">
+            <InputField
+              label="Full Name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your full name"
+              required
+              disabled={isLoading}
+            />
+            
             <InputField
               label="Email Address"
               type="email"
@@ -72,7 +87,7 @@ const LoginPage = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Create a password"
               required
               disabled={isLoading}
             />
@@ -87,18 +102,18 @@ const LoginPage = () => {
               type="submit"
               variant="primary"
               size="large"
-              disabled={isLoading || !email.trim() || !password.trim()}
+              disabled={isLoading || !name.trim() || !email.trim() || !password.trim()}
               className="auth-submit-btn"
             >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
           
           <div className="auth-footer">
             <p>
-              Don't have an account?{' '}
-              <Link to="/signup" state={{ role }} className="auth-link">
-                Sign up here
+              Already have an account?{' '}
+              <Link to="/login" state={{ role }} className="auth-link">
+                Sign in here
               </Link>
             </p>
           </div>
@@ -108,4 +123,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default SignupPage;

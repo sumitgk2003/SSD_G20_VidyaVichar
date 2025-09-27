@@ -1,0 +1,124 @@
+/* VidyaVichara Dashboard Page Styles */
+.dashboard-page {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.dashboard-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.dashboard-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 10px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-subtitle {
+  font-size: 1.2rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.error-message h2 {
+  color: #dc2626;
+  font-size: 1.5rem;
+  margin: 0 0 10px 0;
+}
+
+.error-message p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .dashboard-page {
+    background: #111827;
+  }
+  
+  .dashboard-title {
+    color: #f9fafb;
+  }
+  
+  .dashboard-subtitle {
+    color: #9ca3af;
+  }
+  
+  .error-message {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .error-message h2 {
+    color: #fca5a5;
+  }
+  
+  .error-message p {
+    color: #9ca3af;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 20px 15px;
+  }
+  
+  .dashboard-title {
+    font-size: 2rem;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 1rem;
+  }
+  
+  .dashboard-header {
+    margin-bottom: 30px;
+  }
+}

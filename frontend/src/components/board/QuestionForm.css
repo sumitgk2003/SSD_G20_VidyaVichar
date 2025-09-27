@@ -1,0 +1,148 @@
+/* VidyaVichara Question Form Styles */
+.question-form-container {
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 30px;
+}
+
+.form-header {
+  margin-bottom: 20px;
+}
+
+.form-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.form-header p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.expand-button {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.expand-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.expand-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.expand-icon {
+  font-size: 1.5rem;
+}
+
+.question-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.submit-btn {
+  min-width: 140px;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .question-form-container {
+    background: #1e293b;
+    border-bottom-color: #374151;
+  }
+  
+  .form-header h3 {
+    color: #f9fafb;
+  }
+  
+  .form-header p {
+    color: #9ca3af;
+  }
+  
+  .error-message {
+    background: #7f1d1d;
+    border-color: #991b1b;
+    color: #fca5a5;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .question-form-container {
+    padding: 15px 20px;
+  }
+  
+  .expand-button {
+    padding: 16px;
+    font-size: 1rem;
+  }
+  
+  .expand-icon {
+    font-size: 1.25rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .submit-btn {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .question-form-container {
+    padding: 15px;
+  }
+  
+  .form-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .form-header p {
+    font-size: 0.85rem;
+  }
+  
+  .expand-button {
+    padding: 14px;
+    font-size: 0.95rem;
+  }
+}

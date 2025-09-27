@@ -1,50 +1,61 @@
 import React from 'react';
-// Assuming Card.jsx is a common component for styling containers
-import Card from '../common/Card.jsx'; 
+import Card from '../common/Card';
+import './ClassCard.css';
 
-const ClassCard = ({ classData, onClick }) => {
-  // Destructure relevant data from the class object
-  const { id, className, subject, accessCode, instructorName, studentCount } = classData;
+const ClassCard = ({ classData, onClick, showAccessCode = false }) => {
+  const { id, title, subject, accessCode, instructorName, studentCount, createdAt } = classData;
 
-  // Determine the user's role based on what data is available or inferred.
-  // We'll primarily focus on displaying the class info clearly.
-  const isInstructorView = !!accessCode; // Simple heuristic: if accessCode is shown, it's for the instructor
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   return (
-    // Card component acts as the container and makes the entire area clickable
-    <Card className="class-card" onClick={onClick}>
-      <div className="card-header">
-        <h3 className="class-name">{className}</h3>
+    <Card 
+      className="class-card" 
+      onClick={onClick}
+      hover={true}
+      padding="medium"
+    >
+      <div className="class-header">
+        <h3 className="class-title">{title}</h3>
         <p className="class-subject">{subject}</p>
       </div>
 
-      <div className="card-details">
-        {/* Detail visible to both students and instructors */}
-        <p>
-          <span className="detail-label">Instructor:</span> {instructorName || 'N/A'}
-        </p>
-
-        {isInstructorView ? (
-          // Details for the Instructor Dashboard
-          <>
-            <p className="access-code">
-              <span className="detail-label">Access Code:</span> 
-              <strong className="code-value">{accessCode}</strong>
-            </p>
-            <p>
-              <span className="detail-label">Students Enrolled:</span> {studentCount || 0}
-            </p>
-          </>
-        ) : (
-          // Details for the Student Dashboard (less info shown)
-          <p>
-            <span className="detail-label">Status:</span> Enrolled
-          </p>
+      <div className="class-details">
+        <div className="detail-row">
+          <span className="detail-label">Instructor:</span>
+          <span className="detail-value">{instructorName || 'N/A'}</span>
+        </div>
+        
+        {showAccessCode && (
+          <div className="detail-row access-code-row">
+            <span className="detail-label">Access Code:</span>
+            <span className="access-code">{accessCode}</span>
+          </div>
         )}
+        
+        {showAccessCode && (
+          <div className="detail-row">
+            <span className="detail-label">Students:</span>
+            <span className="detail-value">{studentCount || 0}</span>
+          </div>
+        )}
+        
+        <div className="detail-row">
+          <span className="detail-label">Created:</span>
+          <span className="detail-value">{formatDate(createdAt)}</span>
+        </div>
       </div>
 
-      <div className="card-footer">
-        <p className="click-prompt">Click to Open Q&A Board →</p>
+      <div className="class-footer">
+        <div className="click-hint">
+          <span>Click to open Q&A board</span>
+          <span className="arrow">→</span>
+        </div>
       </div>
     </Card>
   );

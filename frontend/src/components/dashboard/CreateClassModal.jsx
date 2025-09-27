@@ -1,94 +1,121 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import InputField from '../common/InputField.jsx';
-import Button from '../common/Button.jsx';
-
-// Assume you have an action 'createClass' defined in classesSlice
-import { createClass } from '../../app/features/classesSlice.js'; 
+import InputField from '../common/InputField';
+import Button from '../common/Button';
+import { createClass, clearError } from '../../app/features/classSlice';
+import './Modal.css';
 
 const CreateClassModal = ({ onClose }) => {
-  const [className, setClassName] = useState('');
+  const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
-  const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [createdClass, setCreatedClass] = useState(null);
   
   const dispatch = useDispatch();
-  // Get status from Redux for the create class operation
-  const { status } = useSelector((state) => state.classes);
+  const { status, error } = useSelector((state) => state.classes);
   
-  // Disable the form/button while the operation is in progress
-  const isLoading = status === 'loading'; 
+  const isLoading = status === 'loading';
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
-
-    // Client-side validation
-    if (!className.trim()) {
-      setError('Class Name is required.');
-      return;
-    }
-    if (!subject.trim()) {
-      setError('Subject is required.');
+    
+    if (!title.trim() || !subject.trim()) {
       return;
     }
 
-    const newClassData = {
-      className: className.trim(),
-      subject: subject.trim(),
-    };
-
-    // Dispatch the Redux thunk to call the API
-    dispatch(createClass(newClassData))
-      .unwrap() // Used with createAsyncThunk to handle promise rejection
-      .then(() => {
-        // Success: Clear form and close the modal
-        setClassName('');
+    dispatch(createClass({ title: title.trim(), subject: subject.trim() }))
+      .unwrap()
+      .then((newClass) => {
+        setCreatedClass(newClass);
+        setShowSuccess(true);
+        setTitle('');
         setSubject('');
-        onClose();
       })
-      .catch((err) => {
-        setError(err.message || 'Failed to create class. Please try again.');
+      .catch(() => {
+        // Error is handled by Redux
       });
   };
 
+  const handleClose = () => {
+    dispatch(clearError());
+    onClose();
+  };
+
+  if (showSuccess && createdClass) {
+    return (
+      <div className="modal-success">
+        <div className="success-icon">✅</div>
+        <h3>Class Created Successfully!</h3>
+        <div className="success-details">
+          <p><strong>Class:</strong> {createdClass.title}</p>
+          <p><strong>Subject:</strong> {createdClass.subject}</p>
+          <div className="access-code-display">
+            <p><strong>Access Code:</strong></p>
+            <div className="access-code-box">
+              {createdClass.accessCode}
+            </div>
+            <p className="access-code-note">
+              Share this code with students so they can join your class
+            </p>
+          </div>
+        </div>
+        <div className="modal-actions">
+          <Button 
+            onClick={handleClose} 
+            variant="primary"
+            size="large"
+          >
+            Done
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="create-class-modal">
-      <h2>Create New Class</h2>
-      <p>Fill in the details for your new Q&A classroom.</p>
-      
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="modal-form">
         <InputField
-          label="Class Name"
+          label="Class Title"
           type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g., Software System Development"
-          value={className}
-          onChange={(e) => setClassName(e.target.value)}
           required
+          disabled={isLoading}
         />
         
         <InputField
-          label="Subject / Topic"
+          label="Subject/Topic"
           type="text"
-          placeholder="e.g., System Design Principles"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
+          placeholder="e.g., System Design Principles"
           required
+          disabled={isLoading}
         />
         
-        {error && <p className="form-error-message">{error}</p>}
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
         
         <div className="modal-actions">
           <Button 
             type="submit" 
             variant="primary" 
-            disabled={isLoading}
+            size="large"
+            disabled={isLoading || !title.trim() || !subject.trim()}
+            className="submit-btn"
           >
             {isLoading ? 'Creating...' : 'Create Class'}
           </Button>
           <Button 
             type="button" 
-            variant="secondary" 
-            onClick={onClose}
+            variant="outline" 
+            size="large"
+            onClick={handleClose}
             disabled={isLoading}
           >
             Cancel
