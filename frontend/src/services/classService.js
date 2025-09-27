@@ -1,56 +1,114 @@
-// Class service: backend lacks class list/join endpoints for students,
-// so we keep a lightweight local implementation to support UI flows.
-// Instructor class creation exists on backend but is not wired here yet.
+// VidyaVichara Class Management Service
+// Handles class creation, joining, and management
 
-const CLASSES_KEY = 'vv_classes';
+const CLASSES_KEY = 'vidyavichara_classes';
+const ENROLLMENTS_KEY = 'vidyavichara_enrollments';
 
-const persist = (classes) => {
+// Generate unique access code
+const generateAccessCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+// Local storage helpers
+const getClasses = () => {
+  const data = localStorage.getItem(CLASSES_KEY);
+  return data ? JSON.parse(data) : [];
+};
+
+const saveClasses = (classes) => {
   localStorage.setItem(CLASSES_KEY, JSON.stringify(classes));
 };
 
-const read = () => {
-  const raw = localStorage.getItem(CLASSES_KEY);
-  try {
-    return raw ? JSON.parse(raw) : [];
-  } catch (_) {
-    return [];
-  }
+const getEnrollments = () => {
+  const data = localStorage.getItem(ENROLLMENTS_KEY);
+  return data ? JSON.parse(data) : {};
 };
 
-// 1. Get Classes (Used by both Instructors and Students)
-const getClasses = async (_token) => {
-  return read();
+const saveEnrollments = (enrollments) => {
+  localStorage.setItem(ENROLLMENTS_KEY, JSON.stringify(enrollments));
 };
 
-// 2. Create Class (Instructor only)
-const createClass = async (classData, _token) => {
-  const classes = read();
+// Create new class (instructor only)
+const createClass = async (classData, instructorId) => {
+  const classes = getClasses();
+  const accessCode = generateAccessCode();
+  
   const newClass = {
-    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-    className: classData.className || 'Untitled Class',
-    subject: classData.subject || 'General',
-    accessCode: (Math.random().toString(36).slice(2, 8)).toUpperCase(),
+    id: Date.now().toString(),
+    title: classData.title,
+    subject: classData.subject,
+    instructorId,
+    instructorName: classData.instructorName,
+    accessCode,
     createdAt: new Date().toISOString(),
+    studentCount: 0,
   };
+
   classes.push(newClass);
-  persist(classes);
+  saveClasses(classes);
+  
   return newClass;
 };
 
-// 3. Join Class (Student only)
-const joinClass = async (accessCode, _token) => {
-  const classes = read();
-  const found = classes.find((c) => c.accessCode === accessCode);
-  if (!found) {
+// Join class with access code (student only)
+const joinClass = async (accessCode, studentId) => {
+  const classes = getClasses();
+  const enrollments = getEnrollments();
+  
+  const targetClass = classes.find(c => c.accessCode === accessCode);
+  if (!targetClass) {
     throw new Error('Invalid access code');
   }
-  return found;
+
+  // Check if already enrolled
+  if (enrollments[studentId]?.includes(targetClass.id)) {
+    throw new Error('You are already enrolled in this class');
+  }
+
+  // Add enrollment
+  if (!enrollments[studentId]) {
+    enrollments[studentId] = [];
+  }
+  enrollments[studentId].push(targetClass.id);
+  saveEnrollments(enrollments);
+
+  // Update student count
+  targetClass.studentCount++;
+  saveClasses(classes);
+
+  return targetClass;
 };
 
-const classService = {
-  getClasses,
+// Get classes for instructor
+const getInstructorClasses = async (instructorId) => {
+  const classes = getClasses();
+  return classes.filter(c => c.instructorId === instructorId);
+};
+
+// Get enrolled classes for student
+const getStudentClasses = async (studentId) => {
+  const classes = getClasses();
+  const enrollments = getEnrollments();
+  const enrolledClassIds = enrollments[studentId] || [];
+  
+  return classes.filter(c => enrolledClassIds.includes(c.id));
+};
+
+// Get class by ID
+const getClassById = async (classId) => {
+  const classes = getClasses();
+  return classes.find(c => c.id === classId);
+};
+
+export default {
   createClass,
   joinClass,
+  getInstructorClasses,
+  getStudentClasses,
+  getClassById,
 };
-
-export default classService;

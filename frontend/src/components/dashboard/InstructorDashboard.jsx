@@ -1,63 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import ClassCard from './ClassCard.jsx';
-import Button from '../common/Button.jsx';
-import Modal from '../common/Modal.jsx';
-import CreateClassModal from './CreateClassModal.jsx';
+import ClassCard from './ClassCard';
+import Button from '../common/Button';
+import Modal from '../common/Modal';
+import CreateClassModal from './CreateClassModal';
+import { clearError } from '../../app/features/classSlice';
+import './Dashboard.css';
 
 const InstructorDashboard = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const { classes, status, error } = useSelector((state) => state.classes);
-  
-  const instructorClasses = classes.filter(cls => cls.instructorRole === 'instructor');
 
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
+  const handleOpenCreateModal = () => {
+    dispatch(clearError());
+    setIsCreateModalOpen(true);
+  };
 
-  const handleClassSelect = (classId) => {
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const handleClassClick = (classId) => {
     navigate(`/classroom/${classId}`);
   };
 
   if (status === 'loading') {
-    return <div className="dashboard-message">Loading classes...</div>;
-  }
-
-  if (status === 'failed') {
-    return <div className="dashboard-message error">Error loading classes: {error}</div>;
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading your classes...</p>
+      </div>
+    );
   }
 
   return (
     <div className="instructor-dashboard">
       <div className="dashboard-controls">
-        <Button onClick={handleOpenModal} variant="primary">
+        <div className="controls-header">
+          <h2>Your Classes</h2>
+          <p>Create and manage your interactive Q&A classrooms</p>
+        </div>
+        <Button 
+          onClick={handleOpenCreateModal} 
+          variant="primary"
+          size="large"
+          className="create-btn"
+        >
           + Create New Class
         </Button>
       </div>
 
-      <div className="class-list-container">
-        {instructorClasses.length === 0 ? (
-          <p className="dashboard-message no-classes">
-            You haven't created any classes yet. Click "Create New Class" to get started!
-          </p>
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+
+      <div className="classes-section">
+        {classes.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📚</div>
+            <h3>No classes yet</h3>
+            <p>Create your first class to start engaging with students through interactive Q&A sessions.</p>
+            <Button 
+              onClick={handleOpenCreateModal} 
+              variant="primary"
+              size="large"
+            >
+              Create Your First Class
+            </Button>
+          </div>
         ) : (
-          <div className="class-cards-grid">
-            {instructorClasses.map((classData) => (
+          <div className="classes-grid">
+            {classes.map((classData) => (
               <ClassCard 
                 key={classData.id}
                 classData={classData}
-                onClick={() => handleClassSelect(classData.id)}
+                onClick={() => handleClassClick(classData.id)}
+                showAccessCode={true}
               />
             ))}
           </div>
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-        <CreateClassModal onClose={handleCloseModal} />
+      <Modal 
+        isOpen={isCreateModalOpen} 
+        onClose={handleCloseCreateModal}
+        title="Create New Class"
+      >
+        <CreateClassModal onClose={handleCloseCreateModal} />
       </Modal>
     </div>
   );

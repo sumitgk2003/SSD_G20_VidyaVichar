@@ -1,29 +1,58 @@
-import React from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect } from 'react';
+import './Modal.css';
 
-const Modal = ({ isOpen, onClose, children, title }) => {
-  if (!isOpen) {
-    return null;
-  }
+const Modal = ({ isOpen, onClose, children, title, size = 'medium' }) => {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
 
-  return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const sizeClasses = {
+    small: 'modal-small',
+    medium: 'modal-medium',
+    large: 'modal-large',
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-content" 
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+        className={`modal ${sizeClasses[size]}`}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
-          {title && <h3 className="modal-title">{title}</h3>}
-          <button className="modal-close-btn" onClick={onClose}>&times;</button>
+          {title && <h2 className="modal-title">{title}</h2>}
+          <button className="modal-close" onClick={onClose}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path 
+                d="M18 6L6 18M6 6L18 18" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
-        <div className="modal-body">
+        <div className="modal-content">
           {children}
         </div>
       </div>
-    </div>,
-    // Mount the modal outside the main app flow, typically to a root element like 'modal-root'
-    // You should ensure your public/index.html has a <div> with id="modal-root" or just use document.body
-    document.getElementById('modal-root') || document.body
+    </div>
   );
 };
 

@@ -1,52 +1,84 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import QuestionBoard from '../components/board/QuestionBoard.jsx';
-
-// FIX: Correct the import name to match the export in boardSlice.js
-import { fetchQuestions } from '../app/features/boardSlice.js'; 
-import { resetBoardStatus } from '../app/features/boardSlice.js';
+import { useParams, useNavigate } from 'react-router-dom';
+import Header from '../components/layout/Header';
+import QuestionBoard from '../components/board/QuestionBoard';
+import { fetchClassById } from '../app/features/classSlice';
+import { fetchQuestions } from '../app/features/boardSlice';
+import './ClassroomPage.css';
 
 const ClassroomPage = () => {
-  const dispatch = useDispatch();
   const { classId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
+  const { user, isAuthenticated, role } = useSelector((state) => state.auth);
+const { currentClass, status: classStatus } = useSelector((state) => state.classes);
+const { status: boardStatus } = useSelector((state) => state.board); // Get board status
 
-  // Get relevant state from the board slice
-  const { status, error, currentClass } = useSelector((state) => state.board);
-  const { isAuthenticated } = useSelector((state) => state.auth);
-
-  // 1. Fetch questions on mount and clean up on unmount
-  useEffect(() => {
-    if (classId && isAuthenticated) {
-      // Dispatch the correctly named thunk
+useEffect(() => {
+  if (!isAuthenticated) {
+    navigate('/');
+    return;
+  }
+  
+  if (classStatus === 'idle' || (classStatus === 'failed' && !currentClass)) {
+    dispatch(fetchClassById(classId));
+  }
+  
+  // Only fetch questions if the status is not 'succeeded' or 'loading'
+  // NOTE: You must manage the status for fetchQuestions in boardSlice.
+  if (boardStatus === 'idle' || boardStatus === 'failed') {
       dispatch(fetchQuestions(classId));
-    }
+  }
+  
+}, [classId, isAuthenticated, navigate, dispatch, classStatus, boardStatus]); 
 
-    // Cleanup: reset board state when leaving the page
-    return () => {
-      dispatch(resetBoardStatus());
-    };
-  }, [dispatch, classId, isAuthenticated]);
-
-  // 2. Handle loading and error states
-  if (status === 'loading') {
-    return <div className="page-center-message">Connecting to Classroom...</div>;
+  if (!isAuthenticated) {
+    return null;
   }
 
-  if (status === 'failed') {
+  if (classStatus === 'loading' || boardStatus === 'loading') {
     return (
-      <div className="page-center-message error">
-        <h1>Error</h1>
-        <p>Failed to load the classroom: {error}</p>
+      <div className="classroom-loading">
+        <Header />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading classroom...</p>
+        </div>
       </div>
     );
   }
 
-  // 3. Render the main Q&A board
   return (
     <div className="classroom-page">
-      {/* QuestionBoard handles the actual display of the sticky notes */}
-      <QuestionBoard />
+      <Header />
+      <main className="classroom-main">
+        <div className="classroom-header">
+          <div className="class-info">
+            <h1 className="class-title">
+              {currentClass?.title || 'Q&A Board'}
+            </h1>
+            <p className="class-subject">
+              {currentClass?.subject || 'Interactive Learning Session'}
+            </p>
+            {currentClass?.instructorName && (
+              <p className="instructor-info">
+                Instructor: {currentClass.instructorName}
+              </p>
+            )}
+          </div>
+          
+          <div className="user-info">
+            <span className="user-role">
+              {role === 'instructor' ? '👨‍🏫' : '🎓'} {role}
+            </span>
+            <span className="user-name">{user?.name}</span>
+          </div>
+        </div>
+
+        <QuestionBoard classId={classId} />
+      </main>
     </div>
   );
 };

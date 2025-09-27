@@ -1,83 +1,91 @@
 import React from 'react';
-import Button from '../common/Button.jsx';
-import Card from '../common/Card.jsx';
+import { useDispatch } from 'react-redux';
+import { markAsAnswered, markAsImportant } from '../../app/features/boardSlice';
+import './StickyNote.css';
 
-const StickyNote = ({ question, isInstructor, onToggleAnswered }) => {
-  const { 
-    id, 
-    text, 
-    author, 
-    timestamp, 
-    status, 
-    isImportant 
-  } = question;
+const StickyNote = ({ question, index, isInstructor }) => {
+  const dispatch = useDispatch();
 
-  // Determine appearance based on status
-  const isAnswered = status === 'answered';
-  const noteClass = `sticky-note ${isAnswered ? 'answered' : 'open'} ${isImportant ? 'important' : ''}`;
-
-  // Helper function to format the timestamp (e.g., "5 minutes ago")
-  const formatTime = (time) => {
-    // In a real app, you would use a library like 'date-fns' or 'moment'
-    if (!time) return 'Just now';
-    const date = new Date(time);
-    return date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+  const formatTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
-  const handleToggle = () => {
-    // Determine the new status
-    const newStatus = isAnswered ? 'open' : 'answered';
-    onToggleAnswered(id, newStatus);
+  const formatDate = (timestamp) => {
+    return new Date(timestamp).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
-  // Instructor-only action to toggle importance (assuming another action would be dispatched)
-  const handleToggleImportance = () => {
-      // Logic for toggling isImportant would go here, calling a separate thunk/action
-      console.log(`Toggling importance for question ${id}`);
+  const handleMarkAnswered = () => {
+    dispatch(markAsAnswered(question.id));
+  };
+
+  const handleToggleImportant = () => {
+    dispatch(markAsImportant(question.id));
+  };
+
+  const getStickyColor = (index) => {
+    const colors = [
+      'sticky-yellow',
+      'sticky-blue', 
+      'sticky-pink',
+      'sticky-green',
+      'sticky-purple',
+      'sticky-orange'
+    ];
+    return colors[index % colors.length];
   };
 
   return (
-    <Card className={noteClass}>
-      <div className="note-body">
-        <p className="question-text">{text}</p>
-      </div>
-
-      <div className="note-footer">
-        <div className="note-metadata">
-          <p className="note-author">
-            Author: 
-            <strong>{author?.username || 'Anonymous'}</strong>
-          </p>
-          <p className="note-time">{formatTime(timestamp)}</p>
+    <div className={`sticky-note ${getStickyColor(index)} ${question.status === 'answered' ? 'answered' : ''} ${question.isImportant ? 'important' : ''}`}>
+      <div className="sticky-header">
+        <div className="question-meta">
+          <span className="author-name">{question.author.name}</span>
+          <span className="timestamp">
+            {formatDate(question.timestamp)} at {formatTime(question.timestamp)}
+          </span>
         </div>
-
-        {isInstructor && (
-          <div className="note-actions">
-            <Button
-              onClick={handleToggle}
-              variant={isAnswered ? 'success' : 'warning'}
-              size="small"
-            >
-              {isAnswered ? 'Mark Unanswered' : 'Mark Answered'}
-            </Button>
-            
-            <Button
-              onClick={handleToggleImportance}
-              variant={isImportant ? 'danger' : 'secondary'}
-              size="small"
-            >
-              {isImportant ? 'Unmark Important' : 'Mark Important'}
-            </Button>
-          </div>
-        )}
         
-        {!isInstructor && (
-          <div className={`note-status note-status-${status}`}>
-            {isAnswered ? 'Answered' : 'Open'}
+        {isInstructor && (
+          <div className="sticky-actions">
+            <button
+              className={`action-btn ${question.status === 'answered' ? 'answered' : ''}`}
+              onClick={handleMarkAnswered}
+              title={question.status === 'answered' ? 'Mark as unanswered' : 'Mark as answered'}
+            >
+              {question.status === 'answered' ? '✅' : '⭕'}
+            </button>
+            <button
+              className={`action-btn ${question.isImportant ? 'important' : ''}`}
+              onClick={handleToggleImportant}
+              title={question.isImportant ? 'Remove from important' : 'Mark as important'}
+            >
+              {question.isImportant ? '⭐' : '☆'}
+            </button>
           </div>
         )}
       </div>
-    </Card>
+      
+      <div className="sticky-content">
+        <p className="question-text">{question.text}</p>
+      </div>
+      
+      <div className="sticky-footer">
+        <div className="status-indicators">
+          {question.status === 'answered' && (
+            <span className="status-badge answered">Answered</span>
+          )}
+          {question.isImportant && (
+            <span className="status-badge important">Important</span>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

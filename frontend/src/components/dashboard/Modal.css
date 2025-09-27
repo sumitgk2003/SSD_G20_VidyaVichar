@@ -1,0 +1,169 @@
+/* VidyaVichara Modal Content Styles */
+.create-class-modal,
+.join-class-modal {
+  width: 100%;
+}
+
+.modal-description {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.modal-description p {
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.submit-btn {
+  flex: 1;
+  max-width: 200px;
+}
+
+.modal-success {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.success-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.modal-success h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 20px 0;
+}
+
+.success-details {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.success-details p {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.success-details p:last-child {
+  margin-bottom: 0;
+}
+
+.access-code-display {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.access-code-box {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e40af;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.access-code-note {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  margin: 0;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modal-description p {
+    color: #9ca3af;
+  }
+  
+  .modal-success h3 {
+    color: #f9fafb;
+  }
+  
+  .success-details {
+    background: #1f2937;
+  }
+  
+  .success-details p {
+    color: #f3f4f6;
+  }
+  
+  .access-code-display {
+    border-top-color: #374151;
+  }
+  
+  .access-code-box {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border-color: #3b82f6;
+    color: #60a5fa;
+  }
+  
+  .access-code-note {
+    color: #9ca3af;
+  }
+  
+  .error-message {
+    background: #7f1d1d;
+    border-color: #991b1b;
+    color: #fca5a5;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .submit-btn {
+    max-width: none;
+  }
+  
+  .success-details {
+    padding: 16px;
+  }
+  
+  .access-code-box {
+    font-size: 1.25rem;
+    padding: 12px;
+  }
+}

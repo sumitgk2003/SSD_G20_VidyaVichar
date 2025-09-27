@@ -1,53 +1,60 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import Button from '../common/Button.jsx';
-
-// Assume the action to set the filter is defined in boardSlice
-import { setFilter } from '../../app/features/boardSlice.js'; 
+import Button from '../common/Button';
+import { setFilter, clearQuestions } from '../../app/features/boardSlice';
+import './FilterControls.css';
 
 const FilterControls = () => {
   const dispatch = useDispatch();
-  // Get the current filter state from the board slice
-  const currentFilter = useSelector((state) => state.board.filter);
+  const { filter, questions } = useSelector((state) => state.board);
 
-  // Define the available filters
   const filters = [
-    { label: 'All Questions', value: 'all' },
-    { label: 'Unanswered', value: 'unanswered' },
-    { label: 'Answered', value: 'answered' },
-    { label: 'Important', value: 'important' },
+    { value: 'all', label: 'All Questions', count: questions.length },
+    { value: 'unanswered', label: 'Unanswered', count: questions.filter(q => q.status === 'open').length },
+    { value: 'answered', label: 'Answered', count: questions.filter(q => q.status === 'answered').length },
+    { value: 'important', label: 'Important', count: questions.filter(q => q.isImportant).length },
   ];
 
   const handleFilterChange = (filterValue) => {
     dispatch(setFilter(filterValue));
   };
 
+  const handleClearBoard = () => {
+    if (window.confirm('Are you sure you want to clear all questions? This action cannot be undone.')) {
+      dispatch(clearQuestions());
+    }
+  };
+
   return (
     <div className="filter-controls">
-      <h4 className="controls-title">Filter Questions:</h4>
-      <div className="filter-buttons">
-        {filters.map((filter) => (
-          <Button
-            key={filter.value}
-            onClick={() => handleFilterChange(filter.value)}
-            // Use a different variant (e.g., 'primary') if the filter is active
-            variant={currentFilter === filter.value ? 'primary' : 'secondary'}
-            size="small"
-          >
-            {filter.label}
-          </Button>
-        ))}
+      <div className="filter-section">
+        <h3>Filter Questions</h3>
+        <div className="filter-buttons">
+          {filters.map((filterOption) => (
+            <Button
+              key={filterOption.value}
+              onClick={() => handleFilterChange(filterOption.value)}
+              variant={filter === filterOption.value ? 'primary' : 'outline'}
+              size="small"
+              className="filter-btn"
+            >
+              {filterOption.label}
+              <span className="filter-count">({filterOption.count})</span>
+            </Button>
+          ))}
+        </div>
       </div>
-
-      {/* Placeholder for an instructor action, like "Clear Board" */}
-      <Button 
-        variant="danger-outline" 
-        size="small"
-        // onClick={() => dispatch(clearBoard())} // Assumes a 'clearBoard' thunk exists
-        disabled // Disabled until implemented
-      >
-        Clear Board
-      </Button>
+      
+      <div className="actions-section">
+        <Button
+          onClick={handleClearBoard}
+          variant="danger"
+          size="small"
+          className="clear-btn"
+        >
+          🗑️ Clear Board
+        </Button>
+      </div>
     </div>
   );
 };

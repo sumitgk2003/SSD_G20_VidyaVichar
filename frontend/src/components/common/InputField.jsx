@@ -1,12 +1,27 @@
 import React from 'react';
+import './InputField.css';
 
-// A reusable input component with label and error handling
-const InputField = ({ label, type, value, onChange, placeholder, required, error }) => {
-  const inputId = `input-${label.replace(/\s/g, '-')}`;
-  
+const InputField = ({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  placeholder = '',
+  required = false,
+  error = '',
+  className = '',
+  ...props
+}) => {
+  const inputId = `input-${Math.random().toString(36).substr(2, 9)}`;
+
   return (
-    <div className="input-group">
-      <label htmlFor={inputId}>{label}{required && <span className="required-star">*</span>}</label>
+    <div className={`input-field ${className}`}>
+      {label && (
+        <label htmlFor={inputId} className="input-label">
+          {label}
+          {required && <span className="required">*</span>}
+        </label>
+      )}
       <input
         id={inputId}
         type={type}
@@ -14,9 +29,10 @@ const InputField = ({ label, type, value, onChange, placeholder, required, error
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className={error ? 'input-error' : ''}
+        className={`input ${error ? 'input-error' : ''}`}
+        {...props}
       />
-      {error && <p className="input-error-message">{error}</p>}
+      {error && <span className="error-message">{error}</span>}
     </div>
   );
 };

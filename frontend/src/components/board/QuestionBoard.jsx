@@ -1,39 +1,35 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import StickyNote from './StickyNote.jsx';
-import FilterControls from './FilterControls.jsx';
-import QuestionForm from './QuestionForm.jsx';
+import StickyNote from './StickyNote';
+import FilterControls from './FilterControls';
+import QuestionForm from './QuestionForm';
+import { fetchQuestions, clearError } from '../../app/features/boardSlice';
+import './QuestionBoard.css';
 
-// Assume action to fetch questions is defined in boardSlice
-import { fetchQuestions, updateQuestionStatus } from '../../app/features/boardSlice.js'; 
-
-const QuestionBoard = () => {
+const QuestionBoard = ({ classId }) => {
   const dispatch = useDispatch();
-  // Get the classId from the URL (e.g., /classroom/:classId)
-  const { classId } = useParams(); 
-
-  // Get state from the Redux store
+  const { role } = useSelector((state) => state.auth);
   const { 
     questions, 
-    status, 
-    error, 
+    currentClass, 
     filter, 
-    currentClass 
+    status, 
+    error 
   } = useSelector((state) => state.board);
-  
-  // Get user role from the auth state
-  const { role } = useSelector((state) => state.auth);
+
   const isInstructor = role === 'instructor';
 
-  // Fetch questions when the component mounts or classId changes
   useEffect(() => {
     if (classId) {
       dispatch(fetchQuestions(classId));
     }
-  }, [dispatch, classId]);
+  }, [classId, dispatch]);
 
-  // Apply the current filter (logic for filtering is typically in the selector or here)
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
+
+  // Filter questions based on current filter
   const filteredQuestions = questions.filter(question => {
     switch (filter) {
       case 'unanswered':
@@ -48,53 +44,101 @@ const QuestionBoard = () => {
     }
   });
 
-  // Handle instructor actions on a question (e.g., marking as answered)
-  const handleToggleAnswered = (questionId, newStatus) => {
-    if (isInstructor) {
-      dispatch(updateQuestionStatus({ 
-        classId, 
-        questionId, 
-        newStatus 
-      }));
-    }
-  };
-
   if (status === 'loading') {
-    return <div className="board-message">Loading Q&A board...</div>;
+    return (
+      <div className="board-loading">
+        <div className="loading-spinner"></div>
+        <p>Loading Q&A board...</p>
+      </div>
+    );
   }
 
   if (status === 'failed') {
-    return <div className="board-message error">Error loading questions: {error}</div>;
+    return (
+      <div className="board-error">
+        <h3>Error loading questions</h3>
+        <p>{error}</p>
+        <button 
+          onClick={() => dispatch(fetchQuestions(classId))}
+          className="retry-btn"
+        >
+          Try Again
+        </button>
+      </div>
+    );
   }
-  
+
   return (
-    <div className="question-board-container">
-      <h2 className="class-title">{currentClass?.className || 'Q&A Board'}</h2>
-      <p className="class-details">Topic: {currentClass?.subject || 'N/A'}</p>
+    <div className="question-board">
+      <div className="board-header">
+        <div className="board-info">
+          <h2>Interactive Q&A Board</h2>
+          <p>Real-time questions and answers for {currentClass?.className || 'this class'}</p>
+        </div>
+        
+        {isInstructor && (
+          <div className="board-stats">
+            <div className="stat">
+              <span className="stat-number">{questions.length}</span>
+              <span className="stat-label">Total</span>
+            </div>
+            <div className="stat">
+              <span className="stat-number">
+                {questions.filter(q => q.status === 'open').length}
+              </span>
+              <span className="stat-label">Unanswered</span>
+            </div>
+            <div className="stat">
+              <span className="stat-number">
+                {questions.filter(q => q.isImportant).length}
+              </span>
+              <span className="stat-label">Important</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Renders filtering controls for the Instructor only */}
-      {isInstructor && <FilterControls />}
-      
-      {/* Student Question Submission Form */}
-      {!isInstructor && <QuestionForm classId={classId} />}
+      {/* Instructor Controls */}
+      {isInstructor && (
+        <FilterControls />
+      )}
 
-      <div className="question-grid">
+      {/* Student Question Form */}
+      {!isInstructor && (
+        <QuestionForm classId={classId} />
+      )}
+
+      {/* Questions Grid */}
+      <div className="questions-container">
         {filteredQuestions.length === 0 ? (
-          <p className="board-message no-questions">
-            {isInstructor ? 
-              "No questions match the current filter." : 
-              "Be the first to ask a question!"}
-          </p>
+          <div className="empty-board">
+            <div className="empty-icon">
+              {isInstructor ? '📋' : '❓'}
+            </div>
+            <h3>
+              {isInstructor 
+                ? 'No questions match the current filter' 
+                : 'Be the first to ask a question!'
+              }
+            </h3>
+            <p>
+              {isInstructor 
+                ? 'Try changing the filter or wait for students to post questions.' 
+                : 'Click the "Ask Question" button above to get started.'
+              }
+            </p>
+          </div>
         ) : (
-          // Map and render the StickyNote components
-          filteredQuestions.map(question => (
-            <StickyNote 
-              key={question.id}
-              question={question}
-              isInstructor={isInstructor}
-              onToggleAnswered={handleToggleAnswered}
-            />
-          ))
+          <div className="sticky-notes-grid">
+            {filteredQuestions.map((question, index) => (
+              <StickyNote 
+                key={question.id}
+                question={question}
+                index={index}
+                isInstructor={isInstructor}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

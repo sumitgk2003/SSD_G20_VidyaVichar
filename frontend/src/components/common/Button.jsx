@@ -1,10 +1,49 @@
-import React from "react";
-import "./Button.css";
+import React from 'react';
+import './Button.css';
 
-export default function Button({ children, onClick, type = "button" }) {
+const Button = ({ 
+  children, 
+  variant = 'primary', 
+  size = 'medium', 
+  disabled = false, 
+  onClick, 
+  type = 'button',
+  className = '',
+  ...props 
+}) => {
+  const baseClasses = 'btn';
+  const variantClasses = {
+    primary: 'btn-primary',
+    secondary: 'btn-secondary',
+    success: 'btn-success',
+    danger: 'btn-danger',
+    outline: 'btn-outline',
+  };
+  const sizeClasses = {
+    small: 'btn-small',
+    medium: 'btn-medium',
+    large: 'btn-large',
+  };
+
+  const classes = [
+    baseClasses,
+    variantClasses[variant] || variantClasses.primary,
+    sizeClasses[size] || sizeClasses.medium,
+    disabled ? 'btn-disabled' : '',
+    className,
+  ].filter(Boolean).join(' ');
+
   return (
-    <button className="vv-button" type={type} onClick={onClick}>
+    <button
+      type={type}
+      className={classes}
+      disabled={disabled}
+      onClick={onClick}
+      {...props}
+    >
       {children}
     </button>
   );
-}
+};
+
+export default Button;
