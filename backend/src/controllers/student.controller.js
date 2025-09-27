@@ -157,7 +157,7 @@ const getCreatedQueries=asyncHandler(async(req,res)=>{
 const getAllActiveClasses=asyncHandler(async(req,res)=>{
   const classes = await Class.find({
     status:"active",
-  }).select("-accessCode").sort({ createdAt: -1 });
+  }).select("-accessCode").populate("teacher","Name email").sort({ createdAt: -1 });
     return res.status(200).json(
       new ApiResponse(200,classes,"All active classes fetched successfully")
     )
