@@ -18,6 +18,10 @@ const studentSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    activeClass: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class"
+    },
     password: {
       type: String,
       required: true,

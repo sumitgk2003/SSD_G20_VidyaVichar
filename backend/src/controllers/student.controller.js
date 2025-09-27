@@ -187,6 +187,15 @@ const joinClass=asyncHandler(async(req,res)=>{
   if(classs.accessCode!==accessCode){
     throw new ApiError("AccessCode is not correct");
   }
+  await Student.findByIdAndUpdate(req.user._id,
+  {
+    $set:{
+      activeClass:classId
+    }
+  },
+  {
+    new:true
+  }
   return res.status(200).json(
     new ApiResponse(200,{},"Class joined Successfully")
   );
