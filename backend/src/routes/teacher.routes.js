@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries} from "../controllers/teacher.controller.js";
+import { registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery} from "../controllers/teacher.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router=Router() ;
 
