@@ -175,6 +175,34 @@ const answerQuery=asyncHandler(async(req,res)=>{
 
 })
 
+const impQuery=asyncHandler(async(req,res)=>{
+  if (req.userType != "Teacher") {
+    throw new ApiError(401, "You are not authorized to answer the query");
+  }
+  const {queryId}=req.body;
+  if(!queryId){
+    throw new ApiError("Provide queryId");
+  }
+  const query=await Query.findByIdAndUpdate(
+    queryId,
+    {
+      $set: {
+        status: 'Important',
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  if(!query){
+    throw new ApiError("Query does not exist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200,query, "Query marked important successfully"));
+
+})
 
 const getAllClassQueries = asyncHandler(async (req, res) => {
     if (req.userType !== "Teacher") { 

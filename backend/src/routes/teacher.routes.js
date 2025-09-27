@@ -11,6 +11,7 @@ router.route("/logout").post(verifyJWT,logoutTeacher);
 router.route("/createClass").post(verifyJWT,createClass);
 router.route("/getAllCreatedEvents").get(verifyJWT,getAllCreatedEvents);
 router.route("/answerQuery").post(verifyJWT,answerQuery);
+router.route("/impQuery").post(verifyJWT,impQuery);
 router.route("/getAllClassQueries").get(verifyJWT, getAllClassQueries); // Expects query param ?classId=...
 
 export default router;
