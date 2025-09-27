@@ -234,4 +234,4 @@ const getAllCreatedEvents=asyncHandler(async(req,res)=>{
     new ApiResponse(200,events,"Events fetched successfully")
   )
 })
-export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries};
+export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery};
