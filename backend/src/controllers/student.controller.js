@@ -120,14 +120,15 @@ const logoutStudent=asyncHandler(async(req,res)=>{
 })
 
 const createQuery=asyncHandler(async(req,res)=>{
-  const {queryText}=req.body;
+  const {queryText,classId}=req.body;
   if(
-      [queryText].some((field)=>!field||field.trim()==="")
+      [queryText,classId].some((field)=>!field||field.trim()==="")
     ){
       throw new ApiError(400,"All fields are required")
     }
     console.log(queryText);
-  const query=await Query.create({
+    const query=await Query.create({
+      class:classId,
       queryText,
       student:req.user._id
     })

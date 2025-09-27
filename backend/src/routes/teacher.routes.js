@@ -10,5 +10,5 @@ router.route("/login").post(loginTeacher);
 router.route("/logout").post(verifyJWT,logoutTeacher);
 router.route("/createClass").post(verifyJWT,createClass);
 router.route("/getAllCreatedEvents").get(verifyJWT,getAllCreatedEvents);
-
+//router.route("/answerQuery").post(verifyJWT,answerQuery);
 export default router;
