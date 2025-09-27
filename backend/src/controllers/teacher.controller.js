@@ -3,7 +3,7 @@ import {Teacher} from "../models/teacher.model.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Class } from "../models/class.model.js";
-
+import { Query } from "../models/query.model.js";
 const options={
     httpOnly:true,
     secure:true,
@@ -136,7 +136,7 @@ const createClass=asyncHandler(async(req,res)=>{
   const createdClass=await Class.findById(classs._id)
 
   if(!createdClass){
-    throw new ApiError(500,"Something went wrong while creating class")
+    throw new ApiError(500,"Something went wrong while creating class");
   }
   const accessCode = createdClass.generateAccessCode();
   createdClass.accessCode = accessCode;
@@ -144,6 +144,32 @@ const createClass=asyncHandler(async(req,res)=>{
   return res.status(201).json(
       new ApiResponse(200,createdClass,"Class Created Successfully")
     )
+})
+
+const answerQuery=asyncHandler(async(req,res)=>{
+  const {queryId}=req.body;
+  if(!queryId){
+    throw new ApiError("Provide queryId");
+  }
+  const query=await Query.findByIdAndUpdate(
+    queryId,
+    {
+      $set: {
+        status: 'Answered',
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  if(!query){
+    throw new ApiError("Query does not exist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200,query, "Query answered successfully"));
+
 })
 
 const getAllCreatedEvents=asyncHandler(async(req,res)=>{
@@ -155,4 +181,4 @@ const getAllCreatedEvents=asyncHandler(async(req,res)=>{
 
 
 
-export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents};
+export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery};
