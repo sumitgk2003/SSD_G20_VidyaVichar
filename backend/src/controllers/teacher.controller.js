@@ -150,15 +150,22 @@ const answerQuery=asyncHandler(async(req,res)=>{
   if (req.userType != "Teacher") {
     throw new ApiError(401, "You are not authorized to answer the query");
   }
-  const {queryId}=req.body;
-  if(!queryId){
-    throw new ApiError("Provide queryId");
+  // Expecting statusValue to be 'Answered' or 'Unanswered'
+  const {queryId, statusValue}=req.body; 
+  if(!queryId || !statusValue){
+    throw new ApiError(400,"Provide queryId and statusValue");
   }
+  
+  // Validate that the status value is one of the allowed enums
+  if(statusValue !== 'Answered' && statusValue !== 'Unanswered'){
+      throw new ApiError(400, "Invalid status value provided.");
+  }
+
   const query=await Query.findByIdAndUpdate(
     queryId,
     {
       $set: {
-        status: 'Answered',
+        status: statusValue, // Set status dynamically
       },
     },
     {
@@ -166,12 +173,14 @@ const answerQuery=asyncHandler(async(req,res)=>{
     }
   );
   if(!query){
-    throw new ApiError("Query does not exist");
+    throw new ApiError(404,"Query does not exist");
   }
 
+  const message = statusValue === 'Answered' ? "Query answered successfully" : "Query marked unanswered successfully";
+  
   return res
     .status(200)
-    .json(new ApiResponse(200,query, "Query answered successfully"));
+    .json(new ApiResponse(200,query, message));
 
 })
 
@@ -190,7 +199,7 @@ const impQuery = asyncHandler(async (req, res) => {
     queryId,
     {
       $set: {
-        isImportant: isImportant,
+        isImportant: isImportant, 
       },
     },
     {

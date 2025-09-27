@@ -4,14 +4,19 @@ import { classService } from '../services/classService';
 import ClassCard from '../components/ClassCard';
 import CreateClassModal from '../components/CreateClassModal';
 import JoinClassModal from '../components/JoinClassModal';
+import { useNavigate } from 'react-router-dom';
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // State to manage the Join Modal and the ID of the class being accessed
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [classToAccessId, setClassToAccessId] = useState(null); 
 
   useEffect(() => {
     loadClasses();
@@ -42,11 +47,7 @@ const DashboardPage = () => {
     const result = await classService.createClass(classData);
     
     if (result.success) {
-      // Store in localStorage for teacher's dashboard
-      const storedClasses = JSON.parse(localStorage.getItem('teacherClasses') || '[]');
-      storedClasses.push(result.data);
-      localStorage.setItem('teacherClasses', JSON.stringify(storedClasses));
-      
+      // Update state directly for immediate display
       setClasses([...classes, result.data]);
       setShowCreateModal(false);
       return { success: true, message: result.message };
@@ -55,19 +56,39 @@ const DashboardPage = () => {
     }
   };
 
-  const handleJoinClass = async (accessCode) => {
-    const result = await classService.joinClass(accessCode);
-    
-    if (result.success) {
-      // Add to joined classes
-      const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
-      setClasses(joinedClasses);
-      setShowJoinModal(false);
-      return { success: true, message: result.message };
-    } else {
-      return { success: false, message: result.message };
+
+  const handleClassCardClick = (classId) => {
+    if (user.role === 'student') {
+        setClassToAccessId(classId); // Store the ID of the class they want to enter
+        setShowJoinModal(true);       // Open the access code prompt
     }
   };
+  
+
+  const handleJoinClassSubmit = async (accessCode) => {
+    if (!classToAccessId) {
+        return { success: false, message: "Please select a class first or provide a Class ID." };
+    }
+    
+    // Call API to validate the code and update the backend's activeClass field
+    const result = await classService.joinClass(classToAccessId, accessCode); 
+    
+    if (result.success) {
+      const targetClassId = classToAccessId;
+      
+      // Close modal and reset state
+      setShowJoinModal(false);
+      setClassToAccessId(null); 
+      
+      // Redirect to the classroom page (where the persistent access check takes over)
+      navigate(`/classroom/${targetClassId}`); 
+      
+      return { success: true, message: "Access Granted!" };
+    } else {
+      return { success: false, message: result.message || "Invalid Access Code." };
+    }
+  };
+
 
   if (loading) {
     return (
@@ -96,6 +117,7 @@ const DashboardPage = () => {
           </div>
         )}
 
+        {/* Buttons Section */}
         <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', flexWrap: 'wrap' }}>
           {user.role === 'teacher' ? (
             <button
@@ -105,8 +127,11 @@ const DashboardPage = () => {
               ➕ Create New Class
             </button>
           ) : (
+            // The standalone 'Join Class' button functionality is kept, though clicking the card is the primary flow
             <button
-              onClick={() => setShowJoinModal(true)}
+              onClick={() => {
+                  alert("Please click on a class card below to enter its access code.");
+              }}
               className="btn btn-primary"
             >
               🔗 Join Class
@@ -114,6 +139,7 @@ const DashboardPage = () => {
           )}
         </div>
 
+        {/* Classes Display Section */}
         <div>
           <h2 style={{ marginBottom: '20px', color: '#333' }}>
             {user.role === 'teacher' ? 'Your Classes' : 'Available Classes'}
@@ -125,7 +151,7 @@ const DashboardPage = () => {
               {user.role === 'teacher' ? (
                 <p>Create your first class to get started!</p>
               ) : (
-                <p>Join a class using an access code!</p>
+                <p>Click on a class below to enter the access code and join!</p>
               )}
             </div>
           ) : (
@@ -135,6 +161,8 @@ const DashboardPage = () => {
                   key={classItem.id}
                   classData={classItem}
                   userRole={user.role}
+                  // Pass the click handler to the card
+                  onStudentClick={handleClassCardClick} 
                 />
               ))}
             </div>
@@ -142,6 +170,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
+      {/* Modals */}
       {showCreateModal && (
         <CreateClassModal
           onClose={() => setShowCreateModal(false)}
@@ -149,10 +178,13 @@ const DashboardPage = () => {
         />
       )}
 
-      {showJoinModal && (
+      {showJoinModal && classToAccessId && (
         <JoinClassModal
-          onClose={() => setShowJoinModal(false)}
-          onSubmit={handleJoinClass}
+          onClose={() => {
+            setShowJoinModal(false);
+            setClassToAccessId(null); // Reset ID on close
+          }}
+          onSubmit={handleJoinClassSubmit}
         />
       )}
     </div>

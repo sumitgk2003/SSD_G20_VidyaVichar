@@ -74,6 +74,8 @@ export const questionService = {
           author: query.student?.Name || 'Unknown',
           authorEmail: query.student?.email || '',
           status: query.status || 'Unanswered',
+            isImportant: query.isImportant || false, 
+
           createdAt: query.createdAt,
           classId: query.class || classId
         }))
@@ -97,55 +99,69 @@ export const questionService = {
     }
   },
 
-  // Update question status (mock function since backend doesn't have this API)
-  updateQuestion: async (questionId, updates) => {
+updateQuestion: async (questionId, updates) => {
+    let endpoint = null;
+    let payload = { queryId: questionId };
+    
+    // Determine the correct API endpoint and payload
+    if (updates.status === 'Answered') {
+      endpoint = '/teacher/answerQuery';
+      
+    } else if (Object.prototype.hasOwnProperty.call(updates, 'isImportant')) {
+      // Logic for marking as Important
+      endpoint = '/teacher/impQuery';
+      payload.isImportant = updates.isImportant;
+    }
+    
+    // --- 1. ATTEMPT API CALL ---
+    if (endpoint) {
+      try {
+        const response = await api.post(endpoint, payload);
+        
+        return {
+          success: true,
+          data: response.data.data, // Return the updated query object
+          message: response.data.message
+        };
+      } catch (error) {
+        // Log API error, then fall through to local storage mock
+        console.error(`API call to ${endpoint} failed. Falling back to local storage.`);
+        // Note: Do NOT return here, let the local storage logic handle the update
+      }
+    }
+
+    // --- 2. LOCAL STORAGE FALLBACK (For Unanswered, or failed API calls) ---
     try {
-      // Since backend doesn't have this API, we'll use localStorage as fallback
+      console.warn('Using localStorage fallback for update.');
+      
       const storedQuestions = JSON.parse(localStorage.getItem('questions') || '[]');
       const questionIndex = storedQuestions.findIndex(q => q.id === questionId);
       
       if (questionIndex !== -1) {
-        storedQuestions[questionIndex] = { ...storedQuestions[questionIndex], ...updates };
+        const updatedQuestion = { ...storedQuestions[questionIndex], ...updates };
+        storedQuestions[questionIndex] = updatedQuestion;
         localStorage.setItem('questions', JSON.stringify(storedQuestions));
         
         return {
           success: true,
-          data: storedQuestions[questionIndex],
-          message: 'Question updated successfully'
+          data: updatedQuestion,
+          message: 'Question updated successfully (local mock)'
         };
       }
       
       return {
         success: false,
-        message: 'Question not found'
+        message: 'Question not found locally'
       };
+      
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to update question'
+        message: 'Failed to update question locally'
       };
     }
   },
 
-  // Get all questions for a class (mock function for teachers)
-  getAllQuestionsForClass: async (classId) => {
-    try {
-      // Since backend doesn't have this API, we'll use localStorage as fallback
-      const storedQuestions = JSON.parse(localStorage.getItem('questions') || '[]');
-      const filteredQuestions = storedQuestions.filter(q => q.classId === classId);
-      
-      return {
-        success: true,
-        data: filteredQuestions
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to fetch questions',
-        data: []
-      };
-    }
-  },
   getAllQuestionsForClass: async (classId) => {
     try {
       const response = await api.get(`/teacher/getAllClassQueries?classId=${classId}`);
@@ -158,6 +174,8 @@ export const questionService = {
           author: query.student?.Name || 'Unknown',
           authorEmail: query.student?.email || '',
           status: query.status || 'Unanswered',
+            isImportant: query.isImportant || false, 
+
           createdAt: query.createdAt,
           classId: query.class 
         }))

@@ -22,7 +22,8 @@ const JoinClassModal = ({ onClose }) => {
       return;
     }
 
-    dispatch(joinClass(accessCode.trim().toUpperCase()))
+    // REQUIRED CHANGE: The action payload should use the raw, trimmed accessCode
+    dispatch(joinClass(accessCode.trim()))
       .unwrap()
       .then((classData) => {
         setJoinedClass(classData);
@@ -73,7 +74,7 @@ const JoinClassModal = ({ onClose }) => {
           label="Access Code"
           type="text"
           value={accessCode}
-          onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+          onChange={(e) => setAccessCode(e.target.value)} 
           placeholder="e.g., ABC123"
           required
           disabled={isLoading}

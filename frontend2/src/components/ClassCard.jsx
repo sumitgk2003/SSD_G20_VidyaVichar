@@ -1,11 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ClassCard = ({ classData, userRole }) => {
+const ClassCard = ({ classData, userRole, onStudentClick }) => {
   const navigate = useNavigate();
 
-  const handleClick = () => {
-    navigate(`/classroom/${classData.id}`);
+const handleClick = () => {
+    if (userRole === 'teacher') {
+      // Teachers navigate directly to the classroom
+      navigate(`/classroom/${classData.id}`);
+    } else {
+      // Students call the handler to prompt the access code modal on the dashboard
+      onStudentClick(classData.id);
+    }
   };
 
   const formatDate = (dateString) => {

@@ -19,7 +19,7 @@ const StickyNote = ({ question, index, userRole, onUpdateQuestion }) => {
   const handleMarkAnswered = async () => {
     const newStatus = question.status === 'Answered' ? 'Unanswered' : 'Answered';
     await onUpdateQuestion(question.id, { status: newStatus });
-  };
+};
 
   const handleToggleImportant = async () => {
     await onUpdateQuestion(question.id, { isImportant: !question.isImportant });
