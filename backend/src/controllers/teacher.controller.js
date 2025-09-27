@@ -147,6 +147,9 @@ const createClass=asyncHandler(async(req,res)=>{
 })
 
 const answerQuery=asyncHandler(async(req,res)=>{
+  if (req.userType != "Teacher") {
+    throw new ApiError(401, "You are not authorized to answer the query");
+  }
   const {queryId}=req.body;
   if(!queryId){
     throw new ApiError("Provide queryId");
