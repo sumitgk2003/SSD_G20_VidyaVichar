@@ -11,10 +11,7 @@ const api = axios.create({
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // You can add Redux-based token logic here if needed
     return config;
   },
   (error) => {
@@ -28,8 +25,7 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
+      // Optionally, you can dispatch a Redux logout action here
       window.location.href = '/login';
     }
     return Promise.reject(error);

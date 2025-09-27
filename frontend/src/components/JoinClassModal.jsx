@@ -52,12 +52,10 @@ const JoinClassModal = ({ onClose, onSubmit }) => {
               type="text"
               className="form-input"
               value={accessCode}
-              // ❌ FIX 1: Removed .toUpperCase() conversion from the handler
               onChange={(e) => setAccessCode(e.target.value)}
               placeholder="Enter class access code"
               required
               disabled={loading}
-              // ❌ FIX 2: Removed style={{ textTransform: 'uppercase' }}
             />
             <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
               Ask your instructor for the class access code

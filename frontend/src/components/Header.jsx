@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { loginSuccess, logout } from '../store/slices/authSlice';
 
 const Header = () => {
-  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector(state => state.auth);
 
   const handleLogout = async () => {
-    await logout();
+    dispatch(logout());
     navigate('/');
   };
 
@@ -15,21 +17,20 @@ const Header = () => {
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <Link to={isAuthenticated ? '/dashboard' : '/'} className="logo">
+          <Link to={'/'} className="logo">
             VidyaVichara
           </Link>
           
           <nav className="nav-links">
+            <div className="user-info">
+              <span>
+                {isAuthenticated && user ? `Welcome, ${user.name}` : 'Welcome, Guest'}
+              </span>
+            </div>
             {isAuthenticated ? (
-              <div className="user-info">
-                <span>Welcome, {user?.name}</span>
-                <span className="role-badge">
-                  {user?.role === 'teacher' ? '👨‍🏫 Teacher' : '🎓 Student'}
-                </span>
-                <button onClick={handleLogout} className="btn btn-secondary">
-                  Logout
-                </button>
-              </div>
+              <button onClick={handleLogout} className="btn btn-secondary">
+                Logout
+              </button>
             ) : (
               <>
                 <Link to="/login" className="btn btn-secondary">

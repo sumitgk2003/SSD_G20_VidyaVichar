@@ -1,145 +1,126 @@
-// VidyaVichara Question Service
-// Handles Q&A sticky notes with backend integration
+import api from './api';
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
-const QUESTIONS_KEY = 'vidyavichara_questions';
-
-const handleResponse = async (response) => {
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = data?.message || data?.error || `Request failed (${response.status})`;
-    throw new Error(message);
-  }
-  return data;
-};
-
-// Map backend Query to frontend question format
-const mapQueryToQuestion = (query) => ({
-  id: query._id,
-  text: query.queryText,
-  author: {
-    name: query?.student?.Name || 'Student',
-    email: query?.student?.email || '',
+export const questionService = {
+  // Create a new question
+  createQuestion: async (questionData) => {
+    try {
+      const classId = questionData.classId || 'default-class';
+      try {
+        const response = await api.post('/student/createQuery', {
+          queryText: questionData.text,
+          classId: classId
+        });
+        return {
+          success: true,
+          data: {
+            id: response.data.data._id,
+            text: response.data.data.queryText,
+            author: questionData.author || 'Current User',
+            status: response.data.data.status || 'Unanswered',
+            createdAt: response.data.data.createdAt,
+            classId: classId
+          },
+          message: response.data.message
+        };
+      } catch (apiError) {
+        // If API fails, just return failure
+        return {
+          success: false,
+          message: apiError.response?.data?.message || 'Failed to create question'
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to create question'
+      };
+    }
   },
-  timestamp: query.createdAt,
-  status: 'open',
-  isImportant: false,
-  classId: 'default', // Since backend doesn't have class-specific queries
-});
 
-// Get questions for a class (maps to student's created queries)
-const getQuestions = async (classId) => {
-  try {
-    const response = await fetch(`${API_BASE}/api/v1/student/getCreatedQueries`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-    
-    const result = await handleResponse(response);
-    const queries = Array.isArray(result?.data) ? result.data : [];
-    
+  // Get questions created by the current student
+  getQuestionsByClassId: async (classId) => {
+    try {
+      const response = await api.get(`/student/getCreatedQueries?classId=${classId}`);
+      return {
+        success: true,
+        data: response.data.data.map(query => ({
+          id: query._id,
+          text: query.queryText,
+          author: query.student?.Name || 'Unknown',
+          authorEmail: query.student?.email || '',
+          status: query.status || 'Unanswered',
+          isImportant: query.isImportant || false,
+          createdAt: query.createdAt,
+          classId: query.class || classId
+        }))
+      };
+    } catch (apiError) {
+      return {
+        success: false,
+        message: apiError.response?.data?.message || 'Failed to fetch questions'
+      };
+    }
+  },
+
+  updateQuestion: async (questionId, updates) => {
+    let endpoint = null;
+    let payload = { queryId: questionId };
+    if (updates.status === 'Answered' || updates.status === 'Unanswered') {
+      endpoint = '/teacher/answerQuery';
+      payload.statusValue = updates.status;
+    } else if (Object.prototype.hasOwnProperty.call(updates, 'isImportant')) {
+      endpoint = '/teacher/impQuery';
+      payload.isImportant = updates.isImportant;
+    }
+    if (endpoint) {
+      try {
+        const response = await api.post(endpoint, payload);
+        return {
+          success: true,
+          data: response.data.data,
+          message: response.data.message
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Failed to update question via API'
+        };
+      }
+    }
     return {
-      questions: queries.map(mapQueryToQuestion),
-      classDetails: { 
-        className: 'Q&A Board', 
-        subject: 'General',
-        id: classId 
-      },
+      success: false,
+      message: 'Update failed: Action not supported by API or logic error.'
     };
-  } catch (error) {
-    // Fallback to local storage if backend fails
-    const localQuestions = getLocalQuestions(classId);
+  },
+
+  getAllQuestionsForClass: async (classId) => {
+    try {
+      const response = await api.get(`/teacher/getAllClassQueries?classId=${classId}`);
+      return {
+        success: true,
+        data: response.data.data.map(query => ({
+          id: query._id,
+          text: query.queryText,
+          author: query.student?.Name || 'Unknown',
+          authorEmail: query.student?.email || '',
+          status: query.status || 'Unanswered',
+          isImportant: query.isImportant || false,
+          createdAt: query.createdAt,
+          classId: query.class
+        }))
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch questions'
+      };
+    }
+  },
+
+  clearQuestions: async (classId) => {
     return {
-      questions: localQuestions,
-      classDetails: { 
-        className: 'Q&A Board', 
-        subject: 'General',
-        id: classId 
-      },
+      success: true,
+      message: 'Questions cleared (no local storage used)'
     };
   }
-};
-
-// Create new question (maps to student query creation)
-const createQuestion = async (questionData) => {
-  try {
-    const response = await fetch(`${API_BASE}/api/v1/student/createQuery`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ queryText: questionData.text }),
-    });
-    
-    const result = await handleResponse(response);
-    return mapQueryToQuestion(result?.data);
-  } catch (error) {
-    // Fallback to local storage
-    return createLocalQuestion(questionData);
-  }
-};
-
-// Update question status (local only for now)
-const updateQuestion = async (updateData) => {
-  const { classId, questionId, status, isImportant } = updateData;
-  const questions = getLocalQuestions(classId);
-  const questionIndex = questions.findIndex(q => q.id === questionId);
-  
-  if (questionIndex === -1) {
-    throw new Error('Question not found');
-  }
-  
-  const updatedQuestion = {
-    ...questions[questionIndex],
-    status: status || questions[questionIndex].status,
-    isImportant: isImportant !== undefined ? isImportant : questions[questionIndex].isImportant,
-  };
-  
-  questions[questionIndex] = updatedQuestion;
-  saveLocalQuestions(classId, questions);
-  
-  return updatedQuestion;
-};
-
-// Local storage helpers for fallback
-const getLocalQuestions = (classId) => {
-  const data = localStorage.getItem(QUESTIONS_KEY);
-  const allQuestions = data ? JSON.parse(data) : {};
-  return allQuestions[classId] || [];
-};
-
-const saveLocalQuestions = (classId, questions) => {
-  const data = localStorage.getItem(QUESTIONS_KEY);
-  const allQuestions = data ? JSON.parse(data) : {};
-  allQuestions[classId] = questions;
-  localStorage.setItem(QUESTIONS_KEY, JSON.stringify(allQuestions));
-};
-
-const createLocalQuestion = (questionData) => {
-  const { classId, text } = questionData;
-  const questions = getLocalQuestions(classId);
-  const currentUser = JSON.parse(localStorage.getItem('user')) || {};
-  
-  const newQuestion = {
-    id: Date.now().toString(),
-    text: text.trim(),
-    author: {
-      name: currentUser.name || 'Anonymous',
-      email: currentUser.email || '',
-    },
-    timestamp: new Date().toISOString(),
-    status: 'open',
-    isImportant: false,
-    classId,
-  };
-  
-  questions.unshift(newQuestion);
-  saveLocalQuestions(classId, questions);
-  
-  return newQuestion;
-};
-
-export default {
-  getQuestions,
-  createQuestion,
-  updateQuestion,
 };

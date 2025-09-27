@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
-import InputField from '../components/common/InputField';
-import Button from '../components/common/Button';
-import ToggleRole from '../components/common/ToggleRole';
-import { login, clearError } from '../app/features/authSlice';
-import './AuthPage.css';
+import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
+import { authService } from '../services/authService';
 
 const LoginPage = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { status, error, isAuthenticated } = useSelector((state) => state.auth);
-
-  const [role, setRole] = useState(location.state?.role || 'student');
+  const [role, setRole] = useState('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const isLoading = status === 'loading';
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const dispatch = useDispatch();
+  const auth = useSelector(state => state.auth);
+  const isAuthenticated = auth.isAuthenticated;
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -26,83 +24,136 @@ const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    dispatch(clearError());
-  }, [dispatch, role]);
+    // Get role from location state if available
+    if (location.state?.role) {
+      setRole(location.state.role);
+    }
+  }, [location.state]);
 
-  const handleSubmit = (e) => {
+  const login = async ({ email, password }, role) => {
+    dispatch(loginStart());
+    try {
+      let result;
+      if (role === 'student') {
+        result = await authService.loginStudent({ email, password });
+      } else {
+        result = await authService.loginTeacher({ email, password });
+      }
+      if (result.success) {
+        dispatch(loginSuccess(result.data));
+        return { success: true };
+      } else {
+        dispatch(loginFailure(result.message));
+        return { success: false, message: result.message };
+      }
+    } catch (error) {
+      dispatch(loginFailure('Login failed'));
+      return { success: false, message: 'Login failed' };
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     if (!email.trim() || !password.trim()) {
+      setError('Please fill in all fields');
+      setLoading(false);
       return;
     }
 
-    dispatch(login({ role, email: email.trim(), password }))
-      .unwrap()
-      .then(() => {
-        navigate('/dashboard');
-      })
-      .catch(() => {
-        // Error is handled by Redux
-      });
+    const result = await login({ email: email.trim(), password }, role);
+    
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.message);
+    }
+    
+    setLoading(false);
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-header">
-          <h1>Welcome Back</h1>
-          <p>Sign in to your VidyaVichara account</p>
+    <div className="container">
+      <div className="card" style={{ maxWidth: '400px', margin: '50px auto' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>
+          Welcome Back
+        </h2>
+        
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: '600' }}>
+            Login as:
+          </label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => setRole('student')}
+              className={`btn ${role === 'student' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ flex: 1 }}
+            >
+              🎓 Student
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole('teacher')}
+              className={`btn ${role === 'teacher' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ flex: 1 }}
+            >
+              👨‍🏫 Teacher
+            </button>
+          </div>
         </div>
 
-        <div className="auth-form-container">
-          <ToggleRole role={role} setRole={setRole} disabled={isLoading} />
-          
-          <form onSubmit={handleSubmit} className="auth-form">
-            <InputField
-              label="Email Address"
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input
               type="email"
+              className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               required
-              disabled={isLoading}
+              disabled={loading}
             />
-            
-            <InputField
-              label="Password"
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input
               type="password"
+              className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
-              disabled={isLoading}
+              disabled={loading}
             />
-            
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-            
-            <Button
-              type="submit"
-              variant="primary"
-              size="large"
-              disabled={isLoading || !email.trim() || !password.trim()}
-              className="auth-submit-btn"
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </Button>
-          </form>
-          
-          <div className="auth-footer">
-            <p>
-              Don't have an account?{' '}
-              <Link to="/signup" state={{ role }} className="auth-link">
-                Sign up here
-              </Link>
-            </p>
           </div>
-        </div>
+          
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+          
+          <button
+            type="submit"
+            className="btn btn-primary"
+            style={{ width: '100%', marginBottom: '20px' }}
+            disabled={loading || !email.trim() || !password.trim()}
+          >
+            {loading ? 'Signing In...' : 'Sign In'}
+          </button>
+        </form>
+        
+        <p style={{ textAlign: 'center', color: '#666' }}>
+          Don't have an account?{' '}
+          <Link to="/signup" state={{ role }} style={{ color: '#667eea', textDecoration: 'none' }}>
+            Sign up here
+          </Link>
+        </p>
       </div>
     </div>
   );

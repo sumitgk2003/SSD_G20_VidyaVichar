@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery,getTeacherClasses} from "../controllers/teacher.controller.js";
+import { registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery,getTeacherClasses, endClass } from "../controllers/teacher.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router=Router() ;
 
@@ -14,5 +14,6 @@ router.route("/answerQuery").post(verifyJWT,answerQuery);
 router.route("/impQuery").post(verifyJWT,impQuery);
 router.route("/getAllClassQueries").get(verifyJWT, getAllClassQueries); 
 router.route("/getTeacherClasses").get(verifyJWT, getTeacherClasses);
+router.route("/endClass").post(verifyJWT, endClass);
 
 export default router;

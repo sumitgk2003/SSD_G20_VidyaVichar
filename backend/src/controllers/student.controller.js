@@ -127,33 +127,35 @@ const createQuery=asyncHandler(async(req,res)=>{
     ){
       throw new ApiError(400,"All fields are required")
     }
-    const query=await Query.create({
-      class:classId,
-      queryText,
-      student:req.user._id
-    })
+  // Check if class exists and is active
+  const classInstance = await Class.findById(classId);
+  if (!classInstance) {
+    throw new ApiError(404, "Class does not exist");
+  }
+  if (classInstance.status !== 'active') {
+    throw new ApiError(400, "Class is not active");
+  }
+  const query=await Query.create({
+    class:classId,
+    queryText,
+    student:req.user._id
+  })
 
-    const createdQuery=await Query.findById(query._id).populate("student", "Name email")
-    
-      if(!createdQuery){
-        throw new ApiError(500,"Something went wrong while creating query")
-      }
-
-    // --- SOCKET.IO IMPLEMENTATION ---
-    const io = req.app.get('io');
-    if (io) {
-        // Emit to the specific classroom 'room'
-        // Use createdQuery.class.toString() to ensure the ID is a string
-        io.to(createdQuery.class.toString()).emit('queryUpdate', { 
-            classId: createdQuery.class.toString(),
-            message: "New query posted"
-        });
-    }
-    // ----------------------------------
-
-    return res.status(201).json(
-      new ApiResponse(200,createdQuery,"Query created Successfully")
-    )
+  const createdQuery=await Query.findById(query._id).populate("student", "Name email")
+  if(!createdQuery){
+    throw new ApiError(500,"Something went wrong while creating query")
+  }
+  // --- SOCKET.IO IMPLEMENTATION ---
+  const io = req.app.get('io');
+  if (io) {
+      io.to(createdQuery.class.toString()).emit('queryUpdate', { 
+          classId: createdQuery.class.toString(),
+          message: "New query posted"
+      });
+  }
+  return res.status(201).json(
+    new ApiResponse(200,createdQuery,"Query created Successfully")
+  )
 })
 
 
@@ -162,12 +164,17 @@ const createQuery=asyncHandler(async(req,res)=>{
 const getCreatedQueries = asyncHandler(async(req, res) => {
   const { classId } = req.query; 
 
+  // Only allow if student has joined the class (activeClass matches classId)
+  if (classId && req.user.userRole === 'student') {
+    if (!req.user.activeClass || req.user.activeClass.toString() !== classId) {
+      throw new ApiError(403, "You have not joined this class. Please enter the access code to join.");
+    }
+  }
+
   const filter = { student: req.user._id };
-  
   if (classId) {
     filter.class = classId;
   }
-  
   const queries = await Query.find(filter)
     .populate("student", "Name email")
     .sort({ createdAt: -1 });

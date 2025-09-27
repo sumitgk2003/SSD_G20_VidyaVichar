@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Class } from "../models/class.model.js";
 import { Query } from "../models/query.model.js";
+import { Student } from "../models/student.model.js"; // Import Student model
 const options={
     httpOnly:true,
     secure:true,
@@ -290,5 +291,41 @@ const getTeacherClasses = asyncHandler(async (req, res) => {
     );
 });
 
+const endClass = asyncHandler(async (req, res) => {
+  if (req.userType !== "Teacher") {
+    throw new ApiError(401, "You are not authorized to end this class");
+  }
+  const { classId } = req.body;
+  if (!classId) {
+    throw new ApiError(400, "Class ID is required");
+  }
+  // Only allow the teacher who owns the class to end it
+  const classDoc = await Class.findOne({ _id: classId, teacher: req.user._id });
+  if (!classDoc) {
+    throw new ApiError(403, "Class not found or you are not the instructor for this class");
+  }
+  classDoc.status = 'notActive';
+  await classDoc.save();
 
-export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery,getTeacherClasses};
+  // Remove activeClass from all students who have this class as activeClass
+  await Student.updateMany(
+    { activeClass: classId },
+    { $unset: { activeClass: "" } }
+  );
+
+  // Emit a 'classEnded' event to the classroom room so all students are notified
+  const io = req.app.get('io');
+  if (io) {
+    io.to(classId.toString()).emit('classEnded', {
+      classId: classId.toString(),
+      message: 'This class has ended.'
+    });
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, classDoc, "Class ended successfully")
+  );
+});
+
+
+export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery,getTeacherClasses, endClass};

@@ -1,93 +1,127 @@
-// VidyaVichara Authentication Service
-// Handles student and instructor authentication with backend
+import api from './api';
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+export const authService = {
+  // Student registration
+  registerStudent: async (userData) => {
+    try {
+      const response = await api.post('/student/register', {
+        Name: userData.name,
+        email: userData.email,
+        Roll_Number: userData.rollNumber,
+        password: userData.password
+      });
+      
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Registration failed'
+      };
+    }
+  },
 
-const handleResponse = async (response) => {
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = data?.message || data?.error || `Request failed (${response.status})`;
-    throw new Error(message);
-  }
-  return data;
-};
+  // Teacher registration
+  registerTeacher: async (userData) => {
+    try {
+      const response = await api.post('/teacher/register', {
+        Name: userData.name,
+        email: userData.email,
+        password: userData.password
+      });
+      
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Registration failed'
+      };
+    }
+  },
 
-const persistUser = (user) => {
-  localStorage.setItem('user', JSON.stringify(user));
-  return user;
-};
+  // Student login
+  loginStudent: async (credentials) => {
+    try {
+      const response = await api.post('/student/login', {
+        email: credentials.email,
+        password: credentials.password
+      });
+      
+      const { data } = response.data;
+      
+      return {
+        success: true,
+        data: {
+          id: data.user._id,
+          name: data.user.Name,
+          email: data.user.email,
+          role: data.userRole,
+          token: data.accessToken
+        },
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed'
+      };
+    }
+  },
 
-// Register new user (student or instructor)
-const register = async ({ role, email, password, name }) => {
-  const isInstructor = role === 'instructor';
-  const endpoint = isInstructor ? '/api/v1/teacher/register' : '/api/v1/student/register';
-  
-  const body = isInstructor
-    ? { Name: name, email, password }
-    : { Name: name, email, Roll_Number: email.split('@')[0], password };
+  // Teacher login
+  loginTeacher: async (credentials) => {
+    try {
+      const response = await api.post('/teacher/login', {
+        email: credentials.email,
+        password: credentials.password
+      });
+      
+      const { data } = response.data;
+      
+      return {
+        success: true,
+        data: {
+          id: data.user._id,
+          name: data.user.Name,
+          email: data.user.email,
+          role: data.userRole,
+          token: data.accessToken
+        },
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed'
+      };
+    }
+  },
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body),
-  });
+  // Student logout
+  logoutStudent: async () => {
+    try {
+      await api.post('/student/logout');
+      return { success: true };
+    } catch (error) {
+      return { success: true };
+    }
+  },
 
-  const result = await handleResponse(response);
-  return { user: result?.data, role: isInstructor ? 'instructor' : 'student' };
-};
+  // Teacher logout
+  logoutTeacher: async () => {
+    try {
+      await api.post('/teacher/logout');
+      return { success: true };
+    } catch (error) {
+      return { success: true };
+    }
+  },
 
-// Login user
-const login = async ({ role, email, password }) => {
-  const isInstructor = role === 'instructor';
-  const endpoint = isInstructor ? '/api/v1/teacher/login' : '/api/v1/student/login';
-
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ email, password }),
-  });
-
-  const result = await handleResponse(response);
-  const payload = result?.data || {};
-  
-  const user = {
-    id: payload?.user?._id,
-    name: payload?.user?.Name,
-    email: payload?.user?.email,
-    role: payload?.userRole === 'teacher' ? 'instructor' : 'student',
-    token: payload?.accessToken,
-  };
-
-  return persistUser(user);
-};
-
-// Logout user
-const logout = async (role = 'student') => {
-  try {
-    const isInstructor = role === 'instructor';
-    const endpoint = isInstructor ? '/api/v1/teacher/logout' : '/api/v1/student/logout';
-    await fetch(`${API_BASE}${endpoint}`, { 
-      method: 'POST', 
-      credentials: 'include' 
-    });
-  } catch (error) {
-    console.warn('Logout request failed:', error);
-  } finally {
-    localStorage.removeItem('user');
-  }
-};
-
-// Get current user from localStorage
-const getCurrentUser = () => {
-  const user = localStorage.getItem('user');
-  return user ? JSON.parse(user) : null;
-};
-
-export default {
-  register,
-  login,
-  logout,
-  getCurrentUser,
 };
