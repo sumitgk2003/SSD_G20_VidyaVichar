@@ -175,14 +175,35 @@ const answerQuery=asyncHandler(async(req,res)=>{
 
 })
 
+
+const getAllClassQueries = asyncHandler(async (req, res) => {
+    if (req.userType !== "Teacher") { 
+        throw new ApiError(401, "You are not authorized to view queries");
+    }
+
+    const { classId } = req.query; 
+
+    if (!classId) {
+        throw new ApiError(400, "Class ID is required to fetch queries");
+    }
+
+    const classs = await Class.findOne({ _id: classId, teacher: req.user._id });
+    if (!classs) {
+        throw new ApiError(403, "Class not found or you are not the instructor for this class");
+    }
+
+    const queries = await Query.find({ class: classId })
+        .populate("student", "Name email") 
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, queries, "Class queries fetched successfully")
+    );
+});
 const getAllCreatedEvents=asyncHandler(async(req,res)=>{
   const events=await Event.find({createdBy:req.user._id}).sort({createdAt:-1});
   return res.status(200).json(
     new ApiResponse(200,events,"Events fetched successfully")
   )
 })
-
-
-
-export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery};
-
+export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries};
