@@ -54,53 +54,59 @@ export const classService = {
   },
 
   // Mock function for getting teacher's classes (backend doesn't have this API)
-  getTeacherClasses: async () => {
+// classService.js (Corrected)
+
+getTeacherClasses: async () => {
     try {
-      // Since backend doesn't have this API, we'll use localStorage as fallback
-      const storedClasses = localStorage.getItem('teacherClasses');
+      // Use the actual backend API route
+      const response = await api.get('/teacher/getTeacherClasses');
+      
       return {
         success: true,
-        data: storedClasses ? JSON.parse(storedClasses) : []
+        data: response.data.data.map(cls => ({
+          // Map fields from the backend response
+          id: cls._id,
+          title: cls.title || 'Untitled Class',
+          accessCode: cls.accessCode, 
+          teacher: cls.teacher,
+          status: cls.status,
+          createdAt: cls.createdAt
+        }))
       };
     } catch (error) {
+      // If the API call fails, handle the error gracefully
       return {
         success: false,
-        message: 'Failed to fetch teacher classes',
+        message: error.response?.data?.message || 'Failed to fetch teacher classes from API',
         data: []
       };
     }
   },
 
   // Mock function for students to join a class (backend doesn't have this API)
-  joinClass: async (accessCode) => {
+  joinClass: async (classId, accessCode) => {
     try {
-      // Since backend doesn't have this API, we'll use localStorage as fallback
-      const joinedClasses = JSON.parse(localStorage.getItem('joinedClasses') || '[]');
+      // Send classId and accessCode to the backend endpoint
+      const response = await api.post('/student/joinClass', {
+        classId: classId,
+        accessCode: accessCode
+      });
       
-      // For now, we'll just add to localStorage
-      // In a real implementation, this would validate the access code with the backend
-      const newClass = {
-        id: Date.now().toString(),
-        accessCode,
-        joinedAt: new Date().toISOString()
-      };
-      
-      joinedClasses.push(newClass);
-      localStorage.setItem('joinedClasses', JSON.stringify(joinedClasses));
-      
+      // The backend updates activeClass in DB and sends a success message
       return {
         success: true,
-        data: newClass,
-        message: 'Successfully joined class'
+        // Backend returns {} for data, but success means the DB was updated
+        data: response.data.data, 
+        message: response.data.message
       };
     } catch (error) {
+      // Capture specific error message (e.g., "AccessCode is not correct")
       return {
         success: false,
-        message: 'Failed to join class'
+        message: error.response?.data?.message || 'Failed to join/access class'
       };
     }
   },
-
   // Get class by ID (mock function)
   getClassById: async (classId) => {
     try {
