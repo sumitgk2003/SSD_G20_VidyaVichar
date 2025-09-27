@@ -10,7 +10,8 @@ const classSchema = new mongoose.Schema({
   },
   status: {
       type: String,
-      enum: [ 'active', 'notActive']
+      enum: [ 'active', 'notActive'],
+      default:'active'
   }
 },
   {timestamps : true}

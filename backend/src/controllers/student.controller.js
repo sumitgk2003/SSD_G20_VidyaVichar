@@ -3,6 +3,7 @@ import {ApiError} from "../utils/ApiError.js"
 import {Student} from "../models/student.model.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { Query } from "../models/query.model.js";
+import { Class } from "../models/class.model.js";
 export const options={
     httpOnly:true,
     secure:true
@@ -152,11 +153,13 @@ const getCreatedQueries=asyncHandler(async(req,res)=>{
 })
 
 
-const getAllEvents=asyncHandler(async(req,res)=>{
-  const events=await Event.find().populate("createdBy","Name email").sort({createdAt:-1});
+const getAllActiveClasses=asyncHandler(async(req,res)=>{
+  const events = await Class.find({
+    status:"active",
+  }).sort({ createdAt: -1 });
     return res.status(200).json(
-      new ApiResponse(200,events,"Events fetched successfully")
+      new ApiResponse(200,events,"All active classes fetched successfully")
     )
 })
 
-export {registerStudent,loginStudent,logoutStudent,createQuery,getCreatedQueries,getAllEvents};
+export {registerStudent,loginStudent,logoutStudent,createQuery,getCreatedQueries,getAllActiveClasses};
