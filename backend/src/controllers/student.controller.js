@@ -154,12 +154,32 @@ const getCreatedQueries=asyncHandler(async(req,res)=>{
 
 
 const getAllActiveClasses=asyncHandler(async(req,res)=>{
-  const events = await Class.find({
+  const classes = await Class.find({
     status:"active",
-  }).sort({ createdAt: -1 });
+  }).select("-accessCode").sort({ createdAt: -1 });
     return res.status(200).json(
-      new ApiResponse(200,events,"All active classes fetched successfully")
+      new ApiResponse(200,classes,"All active classes fetched successfully")
     )
 })
 
-export {registerStudent,loginStudent,logoutStudent,createQuery,getCreatedQueries,getAllActiveClasses};
+const joinClass=asyncHandler(async(req,res)=>{
+  const {classId,accessCode}=req.body;
+  console.log(classId,accessCode);
+  const classs=await Class.findById(classId);
+  if(!classs){
+    throw new ApiError("Class does not exist");
+  }
+  console.log(classs);
+  if(classs.status==='notActive'){
+    throw new ApiError("Class has ended");
+  }
+  if(classs.accessCode!==accessCode){
+    throw new ApiError("AccessCode is not correct");
+  }
+  return res.status(200).json(
+    new ApiResponse(200,{},"Class joined Successfully")
+  );
+})
+
+
+export {registerStudent,loginStudent,logoutStudent,createQuery,getCreatedQueries,getAllActiveClasses,joinClass};
