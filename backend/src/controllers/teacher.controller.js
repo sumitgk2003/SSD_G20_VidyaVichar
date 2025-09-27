@@ -209,7 +209,7 @@ const getAllClassQueries = asyncHandler(async (req, res) => {
         throw new ApiError(401, "You are not authorized to view queries");
     }
 
-    const { classId } = req.body; 
+    const { classId } = req.query; 
 
     if (!classId) {
         throw new ApiError(400, "Class ID is required to fetch queries");

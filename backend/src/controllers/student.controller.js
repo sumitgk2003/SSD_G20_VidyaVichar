@@ -145,14 +145,24 @@ const createQuery=asyncHandler(async(req,res)=>{
 })
 
 
-const getCreatedQueries=asyncHandler(async(req,res)=>{
-  const queries = await Query.find({student:req.user._id})
-    .populate("student", "Name email");
+const getCreatedQueries = asyncHandler(async(req, res) => {
+  const { classId } = req.query; 
+
+  const filter = { student: req.user._id };
+  
+  if (classId) {
+    filter.class = classId;
+  }
+  
+  // Apply the filter to find queries
+  const queries = await Query.find(filter)
+    .populate("student", "Name email")
+    .sort({ createdAt: -1 });
+
   return res
     .status(200)
     .json(new ApiResponse(200, queries, "Your queries fetched successfully"));
 })
-
 
 const getAllActiveClasses=asyncHandler(async(req,res)=>{
   const classes = await Class.find({
