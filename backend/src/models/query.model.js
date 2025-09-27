@@ -16,9 +16,14 @@ const querySchema = new mongoose.Schema({
   },
   status:{
     type:String,
-    enum:['Unanswered','Answered','Important'],
+    enum:['Unanswered','Answered'],
     default:'Unanswered'
+  },
+    isImportant: {
+    type: Boolean,
+    default: false
   }
+
 },{timestamps : true})
 
 export const Query = mongoose.model(

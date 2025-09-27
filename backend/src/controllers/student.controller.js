@@ -154,7 +154,6 @@ const getCreatedQueries = asyncHandler(async(req, res) => {
     filter.class = classId;
   }
   
-  // Apply the filter to find queries
   const queries = await Query.find(filter)
     .populate("student", "Name email")
     .sort({ createdAt: -1 });
@@ -175,29 +174,47 @@ const getAllActiveClasses=asyncHandler(async(req,res)=>{
 
 const joinClass=asyncHandler(async(req,res)=>{
   const {classId,accessCode}=req.body;
-  console.log(classId,accessCode);
-  const classs=await Class.findById(classId);
-  if(!classs){
-    throw new ApiError("Class does not exist");
+  
+  if (!classId || !accessCode) { 
+      throw new ApiError(400, "Class ID and Access Code are required");
   }
-  console.log(classs);
-  if(classs.status==='notActive'){
-    throw new ApiError("Class has ended");
+
+  const classInstance=await Class.findById(classId); 
+  
+  if(!classInstance){
+    throw new ApiError(404, "Class does not exist"); 
   }
-  if(classs.accessCode!==accessCode){
-    throw new ApiError("AccessCode is not correct");
+
+  if(classInstance.status==='notActive'){
+    throw new ApiError(400, "Class has ended"); 
   }
-  await Student.findByIdAndUpdate(req.user._id,
-  {
-    $set:{
-      activeClass:classId
+  
+  if(classInstance.accessCode!==accessCode){
+    throw new ApiError(401, "AccessCode is not correct"); 
+  }
+
+  const updatedStudent = await Student.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set:{
+        activeClass:classId 
+      }
+    },
+    {
+      new:true 
     }
-  },
-  {
-    new:true
-  });
+  ).select("-password -refreshToken"); 
+  
+  if (!updatedStudent) {
+    throw new ApiError(500, "Failed to update student's active class status.");
+  }
+
   return res.status(200).json(
-    new ApiResponse(200,{},"Class joined Successfully")
+    new ApiResponse(
+      200, 
+      { student: updatedStudent }, 
+      "Access granted and active class set successfully"
+    )
   );
 })
 

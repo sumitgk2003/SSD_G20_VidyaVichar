@@ -175,34 +175,41 @@ const answerQuery=asyncHandler(async(req,res)=>{
 
 })
 
-const impQuery=asyncHandler(async(req,res)=>{
-  if (req.userType != "Teacher") {
-    throw new ApiError(401, "You are not authorized to answer the query");
+const impQuery = asyncHandler(async (req, res) => {
+  if (req.userType !== "Teacher") {
+    throw new ApiError(401, "You are not authorized to mark the query.");
   }
-  const {queryId}=req.body;
-  if(!queryId){
-    throw new ApiError("Provide queryId");
+  
+  const { queryId, isImportant } = req.body;
+  
+  if (!queryId || isImportant === undefined) {
+    throw new ApiError(400, "Provide queryId and the isImportant state (true/false).");
   }
-  const query=await Query.findByIdAndUpdate(
+  
+  const query = await Query.findByIdAndUpdate(
     queryId,
     {
       $set: {
-        status: 'Important',
+        isImportant: isImportant,
       },
     },
     {
       new: true,
     }
   );
-  if(!query){
-    throw new ApiError("Query does not exist");
+  
+  if (!query) {
+    throw new ApiError(404, "Query does not exist");
   }
+
+  const message = isImportant 
+    ? "Query marked important successfully" 
+    : "Query marked unimportant successfully";
 
   return res
     .status(200)
-    .json(new ApiResponse(200,query, "Query marked important successfully"));
-
-})
+    .json(new ApiResponse(200, query, message));
+});
 
 const getAllClassQueries = asyncHandler(async (req, res) => {
     if (req.userType !== "Teacher") { 
@@ -229,9 +236,25 @@ const getAllClassQueries = asyncHandler(async (req, res) => {
     );
 });
 const getAllCreatedEvents=asyncHandler(async(req,res)=>{
-  const events=await Event.find({createdBy:req.user._id}).sort({createdAt:-1});
   return res.status(200).json(
-    new ApiResponse(200,events,"Events fetched successfully")
+    new ApiResponse(200, [], "Events fetched successfully (Placeholder)")
   )
 })
-export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery};
+const getTeacherClasses = asyncHandler(async (req, res) => {
+    // 1. Authorization check
+    if (req.userType !== "Teacher") {
+        throw new ApiError(403, "Access denied. Only teachers can view their classes.");
+    }
+    
+    // 2. Database query: Find all classes where the teacher field matches the current user's ID
+    const classes = await Class.find({ teacher: req.user._id })
+        .sort({ createdAt: -1 }); // Sort by newest first
+
+    // 3. Return response
+    return res.status(200).json(
+        new ApiResponse(200, classes, "Teacher's classes fetched successfully")
+    );
+});
+
+
+export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery,getAllClassQueries,impQuery,getTeacherClasses};
