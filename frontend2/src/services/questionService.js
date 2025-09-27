@@ -104,63 +104,49 @@ updateQuestion: async (questionId, updates) => {
     let payload = { queryId: questionId };
     
     // Determine the correct API endpoint and payload
-    if (updates.status === 'Answered') {
+    if (updates.status === 'Answered' || updates.status === 'Unanswered') {
+      // Use the Answered route, passing the desired status value
       endpoint = '/teacher/answerQuery';
+      // The backend (teacher.controller.js) needs statusValue, not just 'status' key
+      payload.statusValue = updates.status; 
       
     } else if (Object.prototype.hasOwnProperty.call(updates, 'isImportant')) {
-      // Logic for marking as Important
+      // Use the Importance route, passing the boolean state
       endpoint = '/teacher/impQuery';
       payload.isImportant = updates.isImportant;
     }
     
-    // --- 1. ATTEMPT API CALL ---
+    // --- ATTEMPT API CALL ---
     if (endpoint) {
       try {
         const response = await api.post(endpoint, payload);
         
+        // Return the fully updated query object received from the API (real-time data)
         return {
           success: true,
-          data: response.data.data, // Return the updated query object
+          data: response.data.data, // This is the updated query object from the DB
           message: response.data.message
         };
       } catch (error) {
-        // Log API error, then fall through to local storage mock
-        console.error(`API call to ${endpoint} failed. Falling back to local storage.`);
-        // Note: Do NOT return here, let the local storage logic handle the update
+        // Log API error, but do NOT fall back to local storage for status/importance changes
+        // as that would desync the database.
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Failed to update question via API'
+        };
       }
     }
 
-    // --- 2. LOCAL STORAGE FALLBACK (For Unanswered, or failed API calls) ---
-    try {
-      console.warn('Using localStorage fallback for update.');
-      
-      const storedQuestions = JSON.parse(localStorage.getItem('questions') || '[]');
-      const questionIndex = storedQuestions.findIndex(q => q.id === questionId);
-      
-      if (questionIndex !== -1) {
-        const updatedQuestion = { ...storedQuestions[questionIndex], ...updates };
-        storedQuestions[questionIndex] = updatedQuestion;
-        localStorage.setItem('questions', JSON.stringify(storedQuestions));
-        
-        return {
-          success: true,
-          data: updatedQuestion,
-          message: 'Question updated successfully (local mock)'
-        };
-      }
-      
-      return {
-        success: false,
-        message: 'Question not found locally'
-      };
-      
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to update question locally'
-      };
-    }
+    // --- FALLBACK (Only for truly unsupported actions or local testing) ---
+    // If no API endpoint was matched (e.g., trying to update text), 
+    // we return failure since we rely on the API for state changes.
+    return {
+      success: false,
+      message: 'Update failed: Action not supported by API or logic error.'
+    };
   },
+
+
 
   getAllQuestionsForClass: async (classId) => {
     try {

@@ -161,20 +161,32 @@ const answerQuery=asyncHandler(async(req,res)=>{
       throw new ApiError(400, "Invalid status value provided.");
   }
 
+  // Populate the class field after update to get the class ID for the socket room
   const query=await Query.findByIdAndUpdate(
     queryId,
     {
       $set: {
-        status: statusValue, // Set status dynamically
+        status: statusValue, 
       },
     },
     {
       new: true,
     }
-  );
+  ).populate("class"); // Populate class to get ID
+
   if(!query){
     throw new ApiError(404,"Query does not exist");
   }
+
+  const io = req.app.get('io');
+  if (io) {
+      // Emit to the specific classroom 'room'
+      io.to(query.class._id.toString()).emit('queryUpdate', { 
+          classId: query.class._id.toString(),
+          message: `Query status changed to ${statusValue}`
+      });
+  }
+  // ----------------------------------
 
   const message = statusValue === 'Answered' ? "Query answered successfully" : "Query marked unanswered successfully";
   
@@ -195,6 +207,7 @@ const impQuery = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Provide queryId and the isImportant state (true/false).");
   }
   
+  // Populate the class field after update to get the class ID for the socket room
   const query = await Query.findByIdAndUpdate(
     queryId,
     {
@@ -205,11 +218,22 @@ const impQuery = asyncHandler(async (req, res) => {
     {
       new: true,
     }
-  );
+  ).populate("class"); // Populate class to get ID
   
   if (!query) {
     throw new ApiError(404, "Query does not exist");
   }
+
+  // --- SOCKET.IO IMPLEMENTATION ---
+  const io = req.app.get('io');
+  if (io) {
+      // Emit to the specific classroom 'room'
+      io.to(query.class._id.toString()).emit('queryUpdate', { 
+          classId: query.class._id.toString(),
+          message: `Query importance toggled`
+      });
+  }
+  // ----------------------------------
 
   const message = isImportant 
     ? "Query marked important successfully" 
@@ -219,6 +243,7 @@ const impQuery = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, query, message));
 });
+
 
 const getAllClassQueries = asyncHandler(async (req, res) => {
     if (req.userType !== "Teacher") { 

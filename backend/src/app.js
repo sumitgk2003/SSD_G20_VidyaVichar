@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import http from "http"; 
+import { Server as SocketIOServer } from "socket.io"; 
 
 const app = express();
 
 app.use(cors({
-  origin:process.env.CORS_ORIGIN,
+  origin:'*',
   credentials:true
 }));
 
@@ -23,4 +25,35 @@ import teacherRouter from './routes/teacher.routes.js'
 app.use("/api/v1/student",studentRouter)
 app.use("/api/v1/teacher",teacherRouter)
 
-export {app};
+
+const server = http.createServer(app);
+
+
+const io = new SocketIOServer(server, {
+
+    cors: {
+        origin: '*',
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
+
+
+app.set('io', io);
+
+
+io.on('connection', (socket) => {
+    console.log(`A user connected: ${socket.id}`);
+
+
+    socket.on('joinClassroom', (classId) => {
+        socket.join(classId);
+        console.log(`User ${socket.id} joined room: ${classId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`User disconnected: ${socket.id}`);
+    });
+});
+
+export {server, io};
