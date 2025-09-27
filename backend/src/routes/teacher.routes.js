@@ -12,3 +12,4 @@ router.route("/createClass").post(verifyJWT,createClass);
 router.route("/getAllCreatedEvents").get(verifyJWT,getAllCreatedEvents);
 router.route("/answerQuery").post(verifyJWT,answerQuery);
 export default router;
+

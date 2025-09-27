@@ -16,7 +16,7 @@ const querySchema = new mongoose.Schema({
   },
   status:{
     type:String,
-    enum:['Unanswered','Answered'],
+    enum:['Unanswered','Answered','Important'],
     default:'Unanswered'
   }
 },{timestamps : true})

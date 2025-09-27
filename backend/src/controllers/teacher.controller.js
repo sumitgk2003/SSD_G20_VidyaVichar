@@ -185,3 +185,4 @@ const getAllCreatedEvents=asyncHandler(async(req,res)=>{
 
 
 export {registerTeacher,createClass,loginTeacher,logoutTeacher,getAllCreatedEvents,answerQuery};
+
